@@ -32,6 +32,7 @@ public class AuthenticationService {
              throw new RuntimeException("Email already exists");
         }
         var user = User.builder()
+                .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .build();

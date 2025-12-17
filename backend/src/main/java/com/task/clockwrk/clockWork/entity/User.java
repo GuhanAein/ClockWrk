@@ -25,6 +25,10 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
+    private String name;
+
+    private String profilePictureUrl;
+
     @lombok.Builder.Default
     private Instant createdAt = Instant.now();
 

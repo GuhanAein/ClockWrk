@@ -1,0 +1,594 @@
+<div class="app-container">
+    <!-- Top Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            ClockWrk
+        </div>
+        <div class="profile-section" style="margin-bottom: 0; position: relative;" (click)="toggleProfileMenu()">
+            <div class="avatar" *ngIf="!userAvatarUrl">{{ username.charAt(0).toUpperCase() }}</div>
+            <img *ngIf="userAvatarUrl" [src]="userAvatarUrl" class="avatar" style="object-fit: cover;">
+            <div class="username">{{ username }}</div>
+
+            <!-- Dropdown Menu -->
+            <div class="profile-menu-dropdown" *ngIf="isProfileMenuOpen" (click)="$event.stopPropagation()">
+                <div class="menu-item" (click)="openProfileModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Settings</span>
+                </div>
+                <div class="menu-item logout" (click)="logout()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log Out</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" *ngIf="isProfileModalOpen" (click)="closeProfileModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">Account Settings</div>
+                <button class="modal-close" (click)="closeProfileModal()">&times;</button>
+            </div>
+
+            <div class="modal-tabs">
+                <div class="modal-tab" [class.active]="activeProfileTab === 'general'"
+                    (click)="activeProfileTab = 'general'">General</div>
+                <div class="modal-tab" [class.active]="activeProfileTab === 'security'"
+                    (click)="activeProfileTab = 'security'">Security</div>
+            </div>
+
+            <div class="modal-body">
+                <!-- General Tab -->
+                <div *ngIf="activeProfileTab === 'general'">
+                    <div class="form-group">
+                        <label class="detail-label">Full Name</label>
+                        <input type="text" [(ngModel)]="editProfileData.name" class="detail-title-input"
+                            style="font-size: 1rem; border-bottom: 1px solid #ddd;">
+                    </div>
+                    <div class="form-group">
+                        <label class="detail-label">Profile Picture</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" [(ngModel)]="editProfileData.profilePictureUrl"
+                                placeholder="Image URL..." class="detail-date-input" style="flex: 1;">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <label class="btn-secondary" style="font-size: 0.8rem; padding: 4px 8px; cursor: pointer;">
+                                <input type="file" (change)="onFileSelected($event)" style="display: none;">
+                                Upload from Device
+                            </label>
+                            <span style="font-size: 0.75rem; color: #aaa;">(Max 2MB)</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; gap: 1rem; align-items: center;">
+                        <div class="avatar" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                            <span *ngIf="!editProfileData.profilePictureUrl">{{
+                                editProfileData.name?.charAt(0)?.toUpperCase() }}</span>
+                            <img *ngIf="editProfileData.profilePictureUrl" [src]="editProfileData.profilePictureUrl"
+                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        </div>
+                        <div style="font-size: 0.85rem; color: #888;">Preview</div>
+                    </div>
+
+                    <div class="modal-footer" style="padding: 0; background: none; margin-top: 2rem;">
+                        <button class="btn-secondary" (click)="closeProfileModal()">Cancel</button>
+                        <button class="btn-primary" (click)="saveProfile()">Save Changes</button>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div *ngIf="activeProfileTab === 'security'">
+                    <div class="form-group">
+                        <label class="detail-label">Current Password</label>
+                        <input type="password" [(ngModel)]="passwordData.currentPassword" class="detail-date-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="detail-label">New Password</label>
+                        <input type="password" [(ngModel)]="passwordData.newPassword" class="detail-date-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="detail-label">Confirm New Password</label>
+                        <input type="password" [(ngModel)]="passwordData.confirmPassword" class="detail-date-input">
+                    </div>
+
+                    <div class="modal-footer" style="padding: 0; background: none; margin-top: 2rem;">
+                        <button class="btn-secondary" (click)="closeProfileModal()">Cancel</button>
+                        <button class="btn-primary" (click)="changePassword()">Change Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-body">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <!-- Profile moved to Top Navbar -->
+
+            <div class="nav-group">
+                <div class="nav-header">Overview</div>
+                <div class="nav-item" [class.active]="currentFilter === 'today'" (click)="setFilter('today')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Today</span>
+                </div>
+                <div class="nav-item" [class.active]="currentFilter === 'next7'" (click)="setFilter('next7')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Next 7 Days</span>
+                </div>
+                <div class="nav-item" [class.active]="currentFilter === 'inbox'" (click)="setFilter('inbox')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                        <path
+                            d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z">
+                        </path>
+                    </svg>
+                    <span>Inbox</span>
+                </div>
+                <div class="nav-item" [class.active]="currentFilter === 'focus'" (click)="setFilter('focus')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                    </svg>
+                    <span>Focus</span>
+                </div>
+                <div class="nav-item" [class.active]="currentFilter === 'matrix'" (click)="setFilter('matrix')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="12" y1="3" x2="12" y2="21"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                    </svg>
+                    <span>Eisenhower Matrix</span>
+                </div>
+                <div class="nav-item" [class.active]="currentFilter === 'habits'" (click)="setFilter('habits')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Habit Tracker</span>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-header">
+                    <span style="flex: 1">Lists</span>
+                    <button (click)="addList()"
+                        style="background:none; border:none; cursor:pointer; color: var(--primary); font-size: 1rem; font-weight: bold;">+</button>
+                </div>
+                <div class="nav-item" *ngFor="let list of customLists"
+                    [class.active]="currentFilter === list.name.toLowerCase()"
+                    (click)="setFilter(list.name.toLowerCase())">
+                    <span
+                        style="width:8px; height:8px; background:#6C63FF; border-radius:50%; margin-right:5px;"></span>
+                    <span>{{ list.name }}</span>
+                </div>
+            </div>
+
+            <div style="flex:1"></div>
+            <div class="nav-group">
+                <div class="nav-item" [class.active]="currentFilter === 'completed'" (click)="setFilter('completed')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Completed</span>
+                </div>
+                <div class="nav-item" style="cursor: pointer" (click)="logout()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: #FF5252;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span style="color: #FF5252;">Log out</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle: Task List -->
+        <div class="main-content">
+            <div class="list-header" *ngIf="currentFilter !== 'focus' && currentFilter !== 'matrix'">
+                <div class="list-title">
+                    {{ currentFilter | titlecase }}
+                    <span class="count-badge" *ngIf="filteredTasks.length > 0">{{ filteredTasks.length }}</span>
+                </div>
+                <div>
+                    <button (click)="loadTasks()"
+                        style="background:none; border:none; cursor:pointer; padding: 4px; border-radius: 4px;"
+                        title="Refresh">
+                        <svg style="width:18px; color:#aaa;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="add-task-bar" *ngIf="currentFilter !== 'focus' && currentFilter !== 'matrix'">
+                <input type="text" class="quick-add-input" placeholder="+ Add a task to {{currentFilter}}..."
+                    [(ngModel)]="newTaskTitle" (keyup.enter)="addTask()">
+            </div>
+
+            <div class="task-list" *ngIf="currentFilter !== 'focus' && currentFilter !== 'matrix'">
+                <div *ngIf="filteredTasks.length === 0"
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50%; color: #bbb; margin-top: 2rem;">
+                    <svg class="empty-state-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <p>All clear! Relax and recharge.</p>
+                </div>
+
+                <!-- Dynamic Tasks -->
+                <div class="task-item" *ngFor="let task of filteredTasks" [class.active]="selectedTask?.id === task.id"
+                    (click)="selectTask(task)">
+
+                    <div class="task-checkbox" [class.checked]="task.completed"
+                        (click)="toggleComplete(task); $event.stopPropagation()">
+                    </div>
+
+                    <div class="task-content">
+                        <div class="task-inner">
+                            <div class="task-title" [class.completed]="task.completed">{{ task.title }}</div>
+                            <div class="task-meta" *ngIf="task.dueDate || task.priority > 0">
+                                <span class="date" [class.overdue]="false" *ngIf="task.dueDate">
+                                    <svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    {{ task.dueDate }}
+                                </span>
+                                <span class="tag" *ngIf="task.priority === 3"
+                                    style="color: #FF5252; background: rgba(255, 82, 82, 0.1);">High</span>
+                                <span class="tag" *ngIf="task.priority === 2"
+                                    style="color: #FFB400; background: rgba(255, 180, 0, 0.1);">Med</span>
+                                <span class="tag" *ngIf="task.priority === 1"
+                                    style="color: #617FDE; background: rgba(97, 127, 222, 0.1);">Low</span>
+                                <span class="list-tag"
+                                    *ngIf="task.listName && task.listName !== 'Inbox' && currentFilter !== task.listName.toLowerCase()">{{
+                                    task.listName }}</span>
+                            </div>
+                        </div>
+
+                        <button (click)="deleteTask(task); $event.stopPropagation()" class="delete-btn">
+                            <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                            </svg>
+                        </button>
+                        <!-- Small hack: we need to make delete btn visible on hover. Add to CSS. -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Focus Mode View -->
+            <div class="focus-container" *ngIf="currentFilter === 'focus'">
+                <div class="focus-header">
+                    <h2 style="font-weight: 600; color: #444; font-size: 1.5rem;">Pomodoro</h2>
+                    <div style="color: #aaa; cursor: pointer;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="timer-wrapper">
+                    <svg class="progress-ring" width="380" height="380">
+                        <circle class="progress-ring__bg" stroke-width="4" fill="transparent" r="170" cx="190" cy="190">
+                        </circle>
+                        <circle class="progress-ring__circle" stroke-width="4" stroke-linecap="round" fill="transparent"
+                            r="170" cx="190" cy="190" [style.stroke-dasharray]="2 * 3.14159 * 170"
+                            [style.stroke-dashoffset]="(2 * 3.14159 * 170) - ((pomoTime / pomoInitialTime) * (2 * 3.14159 * 170))">
+                        </circle>
+                    </svg>
+                    <div class="timer-display">
+                        <div class="time-text">{{ pomoMinutes }}:{{ pomoSeconds }}</div>
+                        <div class="status-text">{{ pomoIsRunning ? 'Focusing...' : (pomoTime === pomoInitialTime ?
+                            'Ready?'
+                            : 'Paused') }}</div>
+                    </div>
+                </div>
+
+                <div class="task-selector-wrapper">
+                    <span class="task-focus-breadcrumb">Focus &gt; </span>
+                    <select class="task-select-clean" (change)="selectFocusTask($event)">
+                        <option value="">Select Task</option>
+                        <option *ngFor="let task of tasks" [value]="task.id" [selected]="focusedTask?.id === task.id">
+                            {{ task.title }}
+                        </option>
+                        <option disabled>──────────</option>
+                        <option value="">No specific task</option>
+                    </select>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-pomo btn-start" (click)="togglePomo()">
+                        {{ pomoIsRunning ? 'Pause' : 'Continue' }}
+                    </button>
+                    <button class="btn-pomo btn-stop" *ngIf="!pomoIsRunning && pomoTime !== pomoInitialTime"
+                        (click)="resetPomo()">
+                        End Focus
+                    </button>
+                </div>
+            </div>
+
+            <!-- Eisenhower Matrix View -->
+            <div class="matrix-container" *ngIf="currentFilter === 'matrix'" cdkDropListGroup>
+                <div class="matrix-header-bar">
+                    <div class="matrix-title">Eisenhower Matrix</div>
+                    <div class="matrix-options">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="matrix-content">
+                    <!-- Q1: Urgent & Important (High Priority) -->
+                    <div class="matrix-quadrant" cdkDropList [cdkDropListData]="getTasksByPriority(3)"
+                        (cdkDropListDropped)="onMatrixDrop($event, 3)">
+                        <div class="quadrant-header q1-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            Urgent & Important
+                        </div>
+                        <div *ngIf="getTasksByPriority(3).length === 0" class="matrix-empty-state">No Tasks</div>
+                        <div class="matrix-task-item" *ngFor="let task of getTasksByPriority(3)"
+                            (click)="selectTask(task)" cdkDrag [cdkDragData]="task">
+                            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                            <div class="task-checkbox" [class.checked]="task.completed"
+                                (click)="toggleComplete(task); $event.stopPropagation()"></div>
+                            <span>{{ task.title }}</span>
+                        </div>
+                        <div class="matrix-input-row">
+                            <input type="text" class="matrix-quick-add" placeholder="+ Add task"
+                                (keyup.enter)="addMatrixTask(3, $event)">
+                        </div>
+                    </div>
+
+                    <!-- Q2: Not Urgent & Important (Medium Priority) -->
+                    <div class="matrix-quadrant" cdkDropList [cdkDropListData]="getTasksByPriority(2)"
+                        (cdkDropListDropped)="onMatrixDrop($event, 2)">
+                        <div class="quadrant-header q2-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            Not Urgent & Important
+                        </div>
+                        <div *ngIf="getTasksByPriority(2).length === 0" class="matrix-empty-state">No Tasks</div>
+                        <div class="matrix-task-item" *ngFor="let task of getTasksByPriority(2)"
+                            (click)="selectTask(task)" cdkDrag [cdkDragData]="task">
+                            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                            <div class="task-checkbox" [class.checked]="task.completed"
+                                (click)="toggleComplete(task); $event.stopPropagation()"></div>
+                            <span>{{ task.title }}</span>
+                        </div>
+                        <div class="matrix-input-row">
+                            <input type="text" class="matrix-quick-add" placeholder="+ Add task"
+                                (keyup.enter)="addMatrixTask(2, $event)">
+                        </div>
+                    </div>
+
+                    <!-- Q3: Urgent & Unimportant (Low Priority) -->
+                    <div class="matrix-quadrant" cdkDropList [cdkDropListData]="getTasksByPriority(1)"
+                        (cdkDropListDropped)="onMatrixDrop($event, 1)">
+                        <div class="quadrant-header q3-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            Urgent & Unimportant
+                        </div>
+                        <div *ngIf="getTasksByPriority(1).length === 0" class="matrix-empty-state">No Tasks</div>
+                        <div class="matrix-task-item" *ngFor="let task of getTasksByPriority(1)"
+                            (click)="selectTask(task)" cdkDrag [cdkDragData]="task">
+                            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                            <div class="task-checkbox" [class.checked]="task.completed"
+                                (click)="toggleComplete(task); $event.stopPropagation()"></div>
+                            <span>{{ task.title }}</span>
+                        </div>
+                        <div class="matrix-input-row">
+                            <input type="text" class="matrix-quick-add" placeholder="+ Add task"
+                                (keyup.enter)="addMatrixTask(1, $event)">
+                        </div>
+                    </div>
+
+                    <!-- Q4: Not Urgent & Unimportant (No Priority) -->
+                    <div class="matrix-quadrant" cdkDropList [cdkDropListData]="getTasksByPriority(0)"
+                        (cdkDropListDropped)="onMatrixDrop($event, 0)">
+                        <div class="quadrant-header q4-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            Not Urgent & Unimportant
+                        </div>
+                        <div *ngIf="getTasksByPriority(0).length === 0" class="matrix-empty-state">No Tasks</div>
+                        <div class="matrix-task-item" *ngFor="let task of getTasksByPriority(0)"
+                            (click)="selectTask(task)" cdkDrag [cdkDragData]="task">
+                            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                            <div class="task-checkbox" [class.checked]="task.completed"
+                                (click)="toggleComplete(task); $event.stopPropagation()"></div>
+                            <span>{{ task.title }}</span>
+                        </div>
+                        <div class="matrix-input-row">
+                            <input type="text" class="matrix-quick-add" placeholder="+ Add task"
+                                (keyup.enter)="addMatrixTask(0, $event)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Habits View -->
+            <div class="habits-container" *ngIf="currentFilter === 'habits'">
+                <div *ngIf="!safeHabitUrl" class="habits-setup">
+                    <div class="habits-icon-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="habits-title">Setup Habit Tracker</h2>
+                    <p class="habits-desc">
+                        To enable personal habit tracking, please create your own copy of the official tracker sheet.
+                    </p>
+
+                    <div class="habits-step-1">
+                        <a href="https://docs.google.com/spreadsheets/d/1p0jTCvxNI1dMeQpJwOMKlbyuzyja7SD1q6MMdjwxKl8/copy"
+                            target="_blank" class="btn-create-sheet">
+                            Step 1: Create Sheet Copy
+                        </a>
+                    </div>
+
+                    <div class="habits-step-2">
+                        <label>Step 2: Paste your new Sheet URL</label>
+                        <div class="url-input-group">
+                            <input type="text" [(ngModel)]="habitUrlInput"
+                                placeholder="https://docs.google.com/spreadsheets/d/..." class="url-input">
+                            <button (click)="saveHabitUrl()" class="btn-save-url">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="safeHabitUrl" class="habits-frame-wrapper">
+                    <div class="habits-frame-header">
+                        <h2>Habit Tracker</h2>
+                        <button (click)="resetHabitSettings()">Disconnect Sheet</button>
+                    </div>
+                    <iframe [src]="safeHabitUrl" class="habits-iframe" title="My Habits"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Detail/Calendar -->
+        <div class="detail-panel"
+            *ngIf="!selectedTask && currentFilter !== 'focus' && currentFilter !== 'matrix' && currentFilter !== 'habits'"
+            style="align-items: center; justify-content: center; text-align: center;">
+            <svg class="empty-state-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <p style="color: #aaa;">Select a task to view details</p>
+        </div>
+
+        <div class="detail-panel"
+            *ngIf="selectedTask && currentFilter !== 'focus' && currentFilter !== 'matrix' && currentFilter !== 'habits'"
+            style="overflow-y: auto;">
+            <div class="detail-header">
+                <div class="task-checkbox" [class.checked]="selectedTask.completed" style="width: 24px; height: 24px;"
+                    (click)="toggleComplete(selectedTask)">
+                </div>
+                <div style="font-size: 0.75rem; color: #aaa; font-style: italic;">{{ saveStatus }}</div>
+            </div>
+
+            <div class="form-group">
+                <input type="text" [(ngModel)]="selectedTask.title" (blur)="updateSelectedTask()"
+                    class="detail-title-input" placeholder="Task Title">
+            </div>
+
+            <div class="form-group">
+                <label class="detail-label">Description</label>
+                <textarea [(ngModel)]="selectedTask.description" (blur)="updateSelectedTask()" class="detail-textarea"
+                    placeholder="Add notes..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="detail-label">Due Date</label>
+                <input type="date" [(ngModel)]="selectedTask.dueDate" (change)="updateSelectedTask()"
+                    class="detail-date-input">
+            </div>
+
+            <div class="form-group">
+                <label class="detail-label">List</label>
+                <select [(ngModel)]="selectedTask.listName" (change)="updateSelectedTask()" class="detail-date-input">
+                    <option value="Inbox">Inbox</option>
+                    <option *ngFor="let list of customLists" [value]="list.name">{{ list.name }}</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="detail-label">Priority</label>
+                <div class="priority-selector">
+                    <span class="prio-option" [class.selected]="selectedTask.priority === 0"
+                        (click)="selectedTask.priority=0; updateSelectedTask()">None</span>
+                    <span class="prio-option" [class.selected]="selectedTask.priority === 1"
+                        (click)="selectedTask.priority=1; updateSelectedTask()" style="color: #617FDE;">Low</span>
+                    <span class="prio-option" [class.selected]="selectedTask.priority === 2"
+                        (click)="selectedTask.priority=2; updateSelectedTask()" style="color: #FNB400;">Med</span>
+                    <span class="prio-option" [class.selected]="selectedTask.priority === 3"
+                        (click)="selectedTask.priority=3; updateSelectedTask()" style="color: #FF5252;">High</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Focus Stats Panel (Visible only in Focus Mode) -->
+        <div class="detail-panel focus-stats-panel" *ngIf="currentFilter === 'focus'" style="padding: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 3rem;">
+                <div
+                    style="width: 24px; height: 24px; background: #617FDE; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                        <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                    </svg>
+                </div>
+                <span style="font-weight: 500; font-size: 1.1rem; color: #444;">Pomo</span>
+            </div>
+
+            <!-- Mock Timeline -->
+            <div class="timeline-container">
+                <div class="timeline-row" *ngFor="let hour of [9, 10, 11, 12, 13, 14, 15]">
+                    <span class="time-label">{{ hour }}:00</span>
+                    <div class="time-line-slot"></div>
+                </div>
+                <!-- Dynamic Red Line for "Now" -->
+                <div class="current-time-line"></div>
+                <!-- Mock usage block -->
+                <div class="focus-usage-block" *ngIf="pomoIsRunning">
+                    <div class="usage-label">Focusing</div>
+                </div>
+            </div>
+
+            <div class="focus-note-section" style="margin-top: 2rem;">
+                <h3 style="font-size: 0.9rem; font-weight: 600; color: #444; margin-bottom: 0.5rem;">Focus Note</h3>
+                <textarea class="detail-textarea"
+                    style="background: #FAFAFA; border: none; padding: 1rem; height: 120px;"
+                    placeholder="What do you have in mind?"></textarea>
+            </div>
+
+        </div>
+    </div>
+</div>
