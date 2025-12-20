@@ -226,6 +226,10 @@ export class DashboardComponent implements OnInit {
   }
 
   setFilter(filter: string) {
+    if (filter === 'habits') {
+      this.router.navigate(['/habits']);
+      return;
+    }
     this.currentFilter = filter;
     this.selectedTask = null; // Deselect on filter change
     this.applyFilter();

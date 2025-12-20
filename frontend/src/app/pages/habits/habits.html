@@ -1,0 +1,334 @@
+<div class="habits-container">
+    <!-- Header -->
+    <header class="habits-header">
+        <div class="header-left">
+            <button class="back-btn" (click)="goToDashboard()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                Back to Dashboard
+            </button>
+            <h1 class="page-title">
+                <span class="title-icon">🎯</span>
+                Habit Tracker
+            </h1>
+        </div>
+        <div class="header-right">
+            <button class="view-toggle-btn" (click)="viewMode = viewMode === 'calendar' ? 'list' : 'calendar'">
+                <span *ngIf="viewMode === 'calendar'">📊 List View</span>
+                <span *ngIf="viewMode === 'list'">📅 Calendar View</span>
+            </button>
+            <button class="add-habit-btn" (click)="openAddHabitModal()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                Add Habit
+            </button>
+            <button class="logout-btn" (click)="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Calendar Navigation -->
+    <div class="calendar-nav">
+        <button class="nav-btn" (click)="previousMonth()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </button>
+        <h2 class="month-year">{{ getMonthYear() }}</h2>
+        <button class="nav-btn" (click)="nextMonth()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Calendar View -->
+    <div class="habits-content" *ngIf="viewMode === 'calendar'">
+        <div class="habits-grid">
+            <!-- Header Row -->
+            <div class="grid-header">
+                <div class="habit-name-header">Habit</div>
+                <div class="calendar-header">
+                    <div class="day-header" *ngFor="let day of calendarDays">
+                        <span class="day-number" [class.current-month]="isCurrentMonth(day)"
+                            [class.today]="isToday(day)">
+                            {{ day.getDate() }}
+                        </span>
+                        <span class="day-name">{{ weekDays[day.getDay() === 0 ? 6 : day.getDay() - 1] }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Habit Rows -->
+            <div class="habit-row" *ngFor="let habit of habits">
+                <div class="habit-info" [style.border-left-color]="habit.color">
+                    <div class="habit-header-row">
+                        <div class="habit-title">
+                            <span class="habit-icon">{{ habit.icon }}</span>
+                            <span class="habit-name">{{ habit.name }}</span>
+                        </div>
+                        <div class="habit-actions">
+                            <button class="icon-btn" (click)="openEditHabitModal(habit)" title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path
+                                        d="M11.333 2.00004C11.5081 1.82494 11.716 1.68605 11.9447 1.59129C12.1735 1.49653 12.4187 1.44775 12.6663 1.44775C12.914 1.44775 13.1592 1.49653 13.3879 1.59129C13.6167 1.68605 13.8246 1.82494 13.9997 2.00004C14.1748 2.17513 14.3137 2.383 14.4084 2.61178C14.5032 2.84055 14.552 3.08575 14.552 3.33337C14.552 3.58099 14.5032 3.82619 14.4084 4.05497C14.3137 4.28374 14.1748 4.49161 13.9997 4.66671L5.33301 13.3334L1.33301 14.6667L2.66634 10.6667L11.333 2.00004Z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <button class="icon-btn delete" (click)="deleteHabit(habit)" title="Delete">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M2 4H3.33333H14" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path
+                                        d="M5.33301 4.00004V2.66671C5.33301 2.31309 5.47348 1.97395 5.72353 1.7239C5.97358 1.47385 6.31272 1.33337 6.66634 1.33337H9.33301C9.68663 1.33337 10.0258 1.47385 10.2758 1.7239C10.5259 1.97395 10.6663 2.31309 10.6663 2.66671V4.00004M12.6663 4.00004V13.3334C12.6663 13.687 12.5259 14.0261 12.2758 14.2762C12.0258 14.5262 11.6866 14.6667 11.333 14.6667H4.66634C4.31272 14.6667 3.97358 14.5262 3.72353 14.2762C3.47348 14.0261 3.33301 13.687 3.33301 13.3334V4.00004H12.6663Z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="habit-stats">
+                        <div class="stat-item">
+                            <span class="stat-icon">🔥</span>
+                            <span class="stat-value">{{ habit.stats?.currentStreak || 0 }}</span>
+                            <span class="stat-label">streak</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-value">{{ getCompletionPercentage(habit) }}%</span>
+                            <span class="stat-label">this month</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">⭐</span>
+                            <span class="stat-value">{{ habit.stats?.longestStreak || 0 }}</span>
+                            <span class="stat-label">best</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="habit-calendar">
+                    <div class="day-cell" *ngFor="let day of calendarDays"
+                        [class.completed]="isHabitCompleted(habit.id!, day)" [class.current-month]="isCurrentMonth(day)"
+                        [class.today]="isToday(day)" [class.future]="isFutureDate(day)"
+                        [class.disabled]="isFutureDate(day)" (click)="toggleHabit(habit, day)">
+                        <div class="check-mark" *ngIf="isHabitCompleted(habit.id!, day)">✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="habits.length === 0">
+                <div class="empty-icon">🎯</div>
+                <h3>No habits yet</h3>
+                <p>Start building better habits by creating your first one!</p>
+                <button class="primary-btn" (click)="openAddHabitModal()">Create Your First Habit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List View -->
+    <div class="habits-list-view" *ngIf="viewMode === 'list'">
+        <div class="habit-card" *ngFor="let habit of habits" [style.border-left-color]="habit.color">
+            <div class="card-header">
+                <div class="habit-title">
+                    <span class="habit-icon-large">{{ habit.icon }}</span>
+                    <div>
+                        <h3>{{ habit.name }}</h3>
+                        <p class="habit-category">{{ habit.category }}</p>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="icon-btn" (click)="openEditHabitModal(habit)">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path
+                                d="M14.166 2.5C14.3849 2.28113 14.6447 2.10752 14.9307 1.98906C15.2167 1.87061 15.5232 1.80969 15.8327 1.80969C16.1422 1.80969 16.4487 1.87061 16.7347 1.98906C17.0206 2.10752 17.2805 2.28113 17.4993 2.5C17.7182 2.71887 17.8918 2.97871 18.0103 3.26468C18.1287 3.55064 18.1897 3.85714 18.1897 4.16667C18.1897 4.47619 18.1287 4.78269 18.0103 5.06866C17.8918 5.35462 17.7182 5.61446 17.4993 5.83333L6.24935 17.0833L1.66602 18.3333L2.91602 13.75L14.166 2.5Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <button class="icon-btn delete" (click)="deleteHabit(habit)">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M2.5 5H4.16667H17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path
+                                d="M6.66602 5.00004V3.33337C6.66602 2.89135 6.84161 2.46742 7.15417 2.15486C7.46673 1.8423 7.89065 1.66671 8.33268 1.66671H11.666C12.108 1.66671 12.532 1.8423 12.8445 2.15486C13.1571 2.46742 13.3327 2.89135 13.3327 3.33337V5.00004M15.8327 5.00004V16.6667C15.8327 17.1087 15.6571 17.5327 15.3445 17.8452C15.032 18.1578 14.608 18.3334 14.166 18.3334H5.83268C5.39065 18.3334 4.96673 18.1578 4.65417 17.8452C4.34161 17.5327 4.16602 17.1087 4.16602 16.6667V5.00004H15.8327Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <p class="habit-description" *ngIf="habit.description">{{ habit.description }}</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-large">🔥</div>
+                    <div class="stat-content">
+                        <div class="stat-value-large">{{ habit.stats?.currentStreak || 0 }}</div>
+                        <div class="stat-label-large">Current Streak</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-large">⭐</div>
+                    <div class="stat-content">
+                        <div class="stat-value-large">{{ habit.stats?.longestStreak || 0 }}</div>
+                        <div class="stat-label-large">Longest Streak</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-large">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-value-large">{{ habit.stats?.totalCompletions || 0 }}</div>
+                        <div class="stat-label-large">Total Completions</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-large">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-value-large">{{ habit.stats?.completionRate || 0 }}%</div>
+                        <div class="stat-label-large">Completion Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="habits.length === 0">
+            <div class="empty-icon">🎯</div>
+            <h3>No habits yet</h3>
+            <p>Start building better habits by creating your first one!</p>
+            <button class="primary-btn" (click)="openAddHabitModal()">Create Your First Habit</button>
+        </div>
+    </div>
+
+    <!-- Add Habit Modal -->
+    <div class="modal-overlay" *ngIf="isAddHabitModalOpen" (click)="closeAddHabitModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Create New Habit</h2>
+                <button class="close-btn" (click)="closeAddHabitModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Habit Name *</label>
+                    <input type="text" [(ngModel)]="habitForm.name" placeholder="e.g., Morning Exercise"
+                        class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea [(ngModel)]="habitForm.description" placeholder="Optional description..."
+                        class="form-textarea"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select [(ngModel)]="habitForm.category" class="form-select">
+                            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select [(ngModel)]="habitForm.frequency" class="form-select">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Icon</label>
+                    <div class="icon-picker">
+                        <button type="button" *ngFor="let icon of icons" class="icon-option"
+                            [class.selected]="habitForm.icon === icon" (click)="habitForm.icon = icon">
+                            {{ icon }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <button type="button" *ngFor="let color of colors" class="color-option"
+                            [class.selected]="habitForm.color === color" [style.background-color]="color"
+                            (click)="habitForm.color = color">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" (click)="closeAddHabitModal()">Cancel</button>
+                <button class="primary-btn" (click)="saveHabit()">Create Habit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Habit Modal -->
+    <div class="modal-overlay" *ngIf="isEditHabitModalOpen" (click)="closeEditHabitModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Edit Habit</h2>
+                <button class="close-btn" (click)="closeEditHabitModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Habit Name *</label>
+                    <input type="text" [(ngModel)]="habitForm.name" placeholder="e.g., Morning Exercise"
+                        class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea [(ngModel)]="habitForm.description" placeholder="Optional description..."
+                        class="form-textarea"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select [(ngModel)]="habitForm.category" class="form-select">
+                            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select [(ngModel)]="habitForm.frequency" class="form-select">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Icon</label>
+                    <div class="icon-picker">
+                        <button type="button" *ngFor="let icon of icons" class="icon-option"
+                            [class.selected]="habitForm.icon === icon" (click)="habitForm.icon = icon">
+                            {{ icon }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <button type="button" *ngFor="let color of colors" class="color-option"
+                            [class.selected]="habitForm.color === color" [style.background-color]="color"
+                            (click)="habitForm.color = color">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" (click)="closeEditHabitModal()">Cancel</button>
+                <button class="primary-btn" (click)="updateHabit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
