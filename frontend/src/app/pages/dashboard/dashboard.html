@@ -311,7 +311,7 @@
                         </circle>
                         <circle class="progress-ring__circle" stroke-width="4" stroke-linecap="round" fill="transparent"
                             r="170" cx="190" cy="190" [style.stroke-dasharray]="2 * 3.14159 * 170"
-                            [style.stroke-dashoffset]="(2 * 3.14159 * 170) - ((pomoTime / pomoInitialTime) * (2 * 3.14159 * 170))">
+                            [style.stroke-dashoffset]="pomoProgress">
                         </circle>
                     </svg>
                     <div class="timer-display">
@@ -319,6 +319,22 @@
                         <div class="status-text">{{ pomoIsRunning ? 'Focusing...' : (pomoTime === pomoInitialTime ?
                             'Ready?'
                             : 'Paused') }}</div>
+
+                        <!-- Mode Switcher -->
+                        <div class="mode-pills" style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                            <button
+                                style="padding: 4px 12px; border-radius: 12px; border: 1px solid #eee; background: white; font-size: 0.8rem; cursor: pointer;"
+                                [class.active-pomo-mode]="pomoMode === 'focus'"
+                                (click)="setPomoMode('focus')">Focus</button>
+                            <button
+                                style="padding: 4px 12px; border-radius: 12px; border: 1px solid #eee; background: white; font-size: 0.8rem; cursor: pointer;"
+                                [class.active-pomo-mode]="pomoMode === 'short'" (click)="setPomoMode('short')">Short
+                                Break</button>
+                            <button
+                                style="padding: 4px 12px; border-radius: 12px; border: 1px solid #eee; background: white; font-size: 0.8rem; cursor: pointer;"
+                                [class.active-pomo-mode]="pomoMode === 'long'" (click)="setPomoMode('long')">Long
+                                Break</button>
+                        </div>
                     </div>
                 </div>
 
@@ -336,12 +352,28 @@
 
                 <div class="controls">
                     <button class="btn-pomo btn-start" (click)="togglePomo()">
-                        {{ pomoIsRunning ? 'Pause' : 'Continue' }}
+                        {{ pomoIsRunning ? 'Pause' : 'Start Focus' }}
                     </button>
                     <button class="btn-pomo btn-stop" *ngIf="!pomoIsRunning && pomoTime !== pomoInitialTime"
                         (click)="resetPomo()">
                         End Focus
                     </button>
+                </div>
+
+                <!-- Stats Counter -->
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ pomoStats.sessionsCompleted }}</div>
+                        <div class="stat-label">Sessions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ pomoStats.totalMinutes }}</div>
+                        <div class="stat-label">Minutes</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ pomoStats.tasksCompletedInFocus }}</div>
+                        <div class="stat-label">Tasks</div>
+                    </div>
                 </div>
             </div>
 
@@ -532,15 +564,17 @@
 
             <!-- Mock Timeline -->
             <div class="timeline-container">
-                <div class="timeline-row" *ngFor="let hour of [9, 10, 11, 12, 13, 14, 15]">
+                <div class="timeline-row" *ngFor="let hour of timelineHours">
                     <span class="time-label">{{ hour }}:00</span>
                     <div class="time-line-slot"></div>
                 </div>
                 <!-- Dynamic Red Line for "Now" -->
-                <div class="current-time-line"></div>
-                <!-- Mock usage block -->
-                <div class="focus-usage-block" *ngIf="pomoIsRunning">
-                    <div class="usage-label">Focusing</div>
+                <div class="current-time-line" [style.top.px]="currentTimePosition"></div>
+
+                <!-- Focus Block -->
+                <div class="focus-usage-block" *ngIf="pomoIsRunning" [style.top.px]="focusBlockPosition"
+                    [style.height.px]="focusBlockHeight">
+                    <div class="usage-label">Focusing ({{ focusTimeRange }})</div>
                 </div>
             </div>
 

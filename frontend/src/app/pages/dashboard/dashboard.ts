@@ -33,21 +33,33 @@ export class DashboardComponent implements OnInit {
   pomoIsRunning = false;
   pomoInterval: any;
   focusedTask: Task | null = null;
+  pomoMode: 'focus' | 'short' | 'long' = 'focus';
+
+  // Stats
+  pomoStats = {
+    sessionsCompleted: 0,
+    totalMinutes: 0,
+    tasksCompletedInFocus: 0
+  };
 
   // Timeline State
   timelineHours: number[] = [];
   pomoStartTime: Date | null = null;
 
-
-
   constructor(
-    private taskService: TaskService,
-    private authService: AuthService,
-    private router: Router
+    public taskService: TaskService,
+    public authService: AuthService,
+    public router: Router
   ) {
     this.generateTimeline();
   }
 
+  get focusBlockHeight(): number {
+    // Return relative height based on mode
+    if (this.pomoMode === 'focus') return 25;
+    if (this.pomoMode === 'short') return 5;
+    return 15;
+  }
 
 
   generateTimeline() {
@@ -77,11 +89,6 @@ export class DashboardComponent implements OnInit {
     return (hourDiff * 60) + this.pomoStartTime.getMinutes();
   }
 
-  get focusBlockHeight(): number {
-    // Height corresponds to 25 mins roughly (if 60px = 60mins, then 25px)
-    return 25;
-  }
-
   get focusTimeRange(): string {
     if (!this.pomoStartTime) return '';
     const end = new Date(this.pomoStartTime.getTime() + 25 * 60000);
@@ -100,9 +107,26 @@ export class DashboardComponent implements OnInit {
   }
 
   get pomoProgress(): number {
-    const circumference = 2 * Math.PI * 45; // r=45
-    const offset = circumference - (this.pomoTime / this.pomoInitialTime) * circumference;
-    return offset;
+    const radius = 170;
+    const circumference = 2 * Math.PI * radius;
+    // Calculate offset based on REMAINING time
+    // offset = circumference means (gap) is full circumference -> 0% visible
+    // offset = 0 means (gap) is 0 -> 100% visible
+
+    const percentRemaining = this.pomoTime / this.pomoInitialTime;
+    return circumference - (percentRemaining * circumference);
+  }
+
+  setPomoMode(mode: 'focus' | 'short' | 'long') {
+    this.pomoMode = mode;
+    this.pausePomo();
+
+    switch (mode) {
+      case 'focus': this.pomoInitialTime = 25 * 60; break;
+      case 'short': this.pomoInitialTime = 5 * 60; break;
+      case 'long': this.pomoInitialTime = 15 * 60; break;
+    }
+    this.pomoTime = this.pomoInitialTime;
   }
 
   togglePomo() {
@@ -118,28 +142,54 @@ export class DashboardComponent implements OnInit {
       this.pomoStartTime = new Date();
     }
     this.pomoIsRunning = true;
+
+    // Clear any existing interval to prevent double-speed
+    if (this.pomoInterval) clearInterval(this.pomoInterval);
+
     this.pomoInterval = setInterval(() => {
       if (this.pomoTime > 0) {
         this.pomoTime--;
       } else {
-        this.pausePomo();
-        // Play sound or notify
-        alert('Pomodoro finished!');
-        this.pomoTime = this.pomoInitialTime;
-        this.pomoStartTime = null;
+        this.completePomo();
       }
     }, 1000);
   }
 
   pausePomo() {
     this.pomoIsRunning = false;
-    clearInterval(this.pomoInterval);
+    if (this.pomoInterval) {
+      clearInterval(this.pomoInterval);
+      this.pomoInterval = null;
+    }
   }
 
   resetPomo() {
     this.pausePomo();
     this.pomoTime = this.pomoInitialTime;
     this.pomoStartTime = null;
+  }
+
+  completePomo() {
+    this.pausePomo();
+    this.pomoTime = this.pomoInitialTime;
+    this.pomoStartTime = null;
+
+    // Update Stats
+    if (this.pomoMode === 'focus') {
+      this.pomoStats.sessionsCompleted++;
+      this.pomoStats.totalMinutes += 25;
+      if (this.focusedTask) {
+        this.pomoStats.tasksCompletedInFocus++;
+        // Optional: Mark task as done?
+        // this.toggleComplete(this.focusedTask); 
+      }
+    }
+
+    // Play sound notification
+    const audio = new Audio('assets/sounds/bell.mp3'); // Ensure this file exists or use browser default
+    audio.play().catch(e => console.log('Audio play failed', e));
+
+    alert(`${this.pomoMode === 'focus' ? 'Focus Session' : 'Break'} Completed!`);
   }
 
   selectFocusTask(e: any) {

@@ -15,6 +15,7 @@ export const routes: Routes = [
     { path: 'signup', component: SignupComponent, canActivate: [guestGuard] },
     { path: 'app', component: DashboardComponent, canActivate: [authGuard] },
     { path: 'habits', component: HabitsComponent, canActivate: [authGuard] },
+    { path: 'pricing', loadComponent: () => import('./pages/pricing/pricing').then(m => m.PricingComponent) },
     { path: 'oauth2/redirect', component: OAuthRedirectComponent },
     { path: '**', redirectTo: '' }
 ];

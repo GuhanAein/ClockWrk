@@ -1,0 +1,46 @@
+<app-navbar></app-navbar>
+
+<div class="pricing-container fade-in">
+    <div class="text-center mb-8">
+        <h1 class="pricing-title">Simple, transparent pricing</h1>
+        <p class="pricing-subtitle">Supercharge your productivity with AI</p>
+    </div>
+
+    <!-- Billing Toggle -->
+    <div class="billing-toggle-container">
+        <span [class.active-period]="!isYearly" class="billing-label">Monthly</span>
+        <div class="toggle-switch" (click)="toggleBilling()">
+            <div class="toggle-slider" [class.slide-right]="isYearly"></div>
+        </div>
+        <span [class.active-period]="isYearly" class="billing-label">Yearly <span class="discount-badge">SAVE
+                40%</span></span>
+    </div>
+
+    <div class="pricing-grid">
+        <div *ngFor="let plan of plans" class="pricing-card" [class.highlighted]="plan.highlight">
+            <div class="card-header">
+                <h3 class="plan-name">{{ plan.name }}</h3>
+                <div class="plan-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">{{ plan.price }}</span>
+                    <span class="period" *ngIf="plan.period">{{ plan.period }}</span>
+                </div>
+            </div>
+
+            <ul class="features-list">
+                <li *ngFor="let feature of plan.features">
+                    <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span [innerHTML]="feature"></span> <!-- innerHTML to support bold/emoji -->
+                </li>
+            </ul>
+
+            <button class="btn w-full" [class.btn-primary]="plan.highlight" [class.btn-outline]="!plan.highlight"
+                [disabled]="plan.active" (click)="handlePayment(plan)">
+                {{ plan.cta }}
+            </button>
+        </div>
+    </div>
+</div>

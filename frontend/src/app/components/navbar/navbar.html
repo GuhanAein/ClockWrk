@@ -1,6 +1,6 @@
 <nav class="navbar">
-    <div class="container" style="max-width: 1200px;"> <!-- Manual override for nav width matching -->
-        <div class="logo">
+    <div class="container" style="max-width: 1200px;">
+        <div class="logo cursor-pointer" (click)="onLogoClick()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -13,9 +13,17 @@
         </div>
         <div class="nav-links">
             <a href="#" class="nav-link">Features</a>
+            <a routerLink="/pricing" class="nav-link">Pricing</a>
             <a href="#" class="nav-link">Download</a>
-            <a routerLink="/login" class="nav-link">Sign In</a>
-            <a routerLink="/signup" class="btn btn-primary">Start for Free</a>
+
+            <ng-container *ngIf="!authService.isAuthenticated()">
+                <a routerLink="/login" class="nav-link">Sign In</a>
+                <a routerLink="/signup" class="btn btn-primary">Start for Free</a>
+            </ng-container>
+
+            <ng-container *ngIf="authService.isAuthenticated()">
+                <a routerLink="/app" class="btn btn-primary">Go to App</a>
+            </ng-container>
         </div>
     </div>
 </nav>

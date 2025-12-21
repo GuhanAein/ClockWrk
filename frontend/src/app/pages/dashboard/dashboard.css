@@ -548,11 +548,15 @@
 }
 
 .progress-ring__circle {
-    transition: stroke-dashoffset 0.5s ease-in-out;
+    transition: stroke-dashoffset 1s linear;
+    /* Smooth continuous movement */
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
     stroke: #617FDE;
-    /* TickTick Blue */
+    stroke-linecap: round;
+    /* Nicer rounded ends */
+    filter: drop-shadow(0 0 4px rgba(97, 127, 222, 0.3));
+    /* Subtle glow */
 }
 
 .timer-display {
@@ -623,9 +627,41 @@
     border: 1px solid #E0E0E0;
 }
 
+
 .btn-stop:hover {
     border-color: #ccc;
     color: #888;
+}
+
+.active-pomo-mode {
+    background: #617FDE !important;
+    color: white !important;
+    border-color: #617FDE !important;
+}
+
+/* Stats Counter */
+.stats-container {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #aeaeae;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Breadcrumb style task selector */
