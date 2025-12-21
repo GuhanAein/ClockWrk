@@ -29,6 +29,9 @@ public class User {
 
     private String profilePictureUrl;
 
+    private String otp;
+    private Instant otpExpiry;
+
     @lombok.Builder.Default
     private Instant createdAt = Instant.now();
 

@@ -6,10 +6,7 @@ import com.task.clockwrk.clockWork.dtos.RegisterRequest;
 import com.task.clockwrk.clockWork.services.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,5 +27,21 @@ public class AuthController {
             @RequestBody AuthRequest request
     ) {
         return ResponseEntity.ok(service.authenticate(request));
+    }
+
+    @PostMapping("/otp/send")
+    public ResponseEntity<Void> sendOtp(
+            @RequestParam String email
+    ) {
+        service.sendOtp(email);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<AuthResponse> verifyOtp(
+            @RequestParam String email,
+            @RequestParam String otp
+    ) {
+        return ResponseEntity.ok(service.verifyOtp(email, otp));
     }
 }
