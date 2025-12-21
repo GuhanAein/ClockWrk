@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HabitService, Habit, HabitStats } from '../../services/habit';
 import { AuthService } from '../../services/auth';
+import confetti from 'canvas-confetti';
 
 @Component({
     selector: 'app-habits',
@@ -16,10 +17,14 @@ export class HabitsComponent implements OnInit {
     habits: Habit[] = [];
     habitEntries: Map<string, Map<string, boolean>> = new Map();
 
-    // Calendar view
+    // Sheet View
     currentMonth: Date = new Date();
-    calendarDays: Date[] = [];
-    weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    monthDays: Date[] = [];
+    weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+    // Filtering & Sorting
+    filterCategory: string = 'All';
+    sortBy: 'name' | 'streak' | 'completion' = 'name';
 
     // Modal states
     isAddHabitModalOpen = false;
@@ -45,12 +50,6 @@ export class HabitsComponent implements OnInit {
         '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6'
     ];
 
-    // View mode
-    viewMode: 'calendar' | 'list' = 'calendar';
-
-    // Stats view
-    showStats = false;
-
     constructor(
         private habitService: HabitService,
         private authService: AuthService,
@@ -63,8 +62,33 @@ export class HabitsComponent implements OnInit {
             return;
         }
 
+        this.generateMonthDays();
         this.loadHabits();
-        this.generateCalendar();
+    }
+
+    get filteredHabits(): Habit[] {
+        let result = [...this.habits];
+
+        // Filter
+        if (this.filterCategory !== 'All') {
+            result = result.filter(h => h.category === this.filterCategory);
+        }
+
+        // Sort
+        result.sort((a, b) => {
+            if (this.sortBy === 'name') {
+                return a.name.localeCompare(b.name);
+            }
+            if (this.sortBy === 'streak') {
+                return (b.stats?.currentStreak || 0) - (a.stats?.currentStreak || 0);
+            }
+            if (this.sortBy === 'completion') {
+                return this.getMonthlySuccessPercentage(b) - this.getMonthlySuccessPercentage(a);
+            }
+            return 0;
+        });
+
+        return result;
     }
 
     loadHabits() {
@@ -78,8 +102,10 @@ export class HabitsComponent implements OnInit {
     }
 
     loadHabitEntries() {
-        const startDate = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth(), 1);
-        const endDate = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 0);
+        const year = this.currentMonth.getFullYear();
+        const month = this.currentMonth.getMonth();
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0);
 
         const startStr = this.formatDate(startDate);
         const endStr = this.formatDate(endDate);
@@ -104,53 +130,34 @@ export class HabitsComponent implements OnInit {
         });
     }
 
-    generateCalendar() {
+    generateMonthDays() {
         const year = this.currentMonth.getFullYear();
         const month = this.currentMonth.getMonth();
+        const lastDay = new Date(year, month + 1, 0).getDate();
 
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-
-        this.calendarDays = [];
-
-        // Add days from previous month to fill the week
-        const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-        for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-            const date = new Date(year, month, -i);
-            this.calendarDays.push(date);
-        }
-
-        // Add all days of current month
-        for (let i = 1; i <= lastDay.getDate(); i++) {
-            this.calendarDays.push(new Date(year, month, i));
-        }
-
-        // Add days from next month to complete the grid
-        const remainingDays = 42 - this.calendarDays.length;
-        for (let i = 1; i <= remainingDays; i++) {
-            this.calendarDays.push(new Date(year, month + 1, i));
+        this.monthDays = [];
+        for (let i = 1; i <= lastDay; i++) {
+            this.monthDays.push(new Date(year, month, i));
         }
     }
 
     previousMonth() {
         this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
-        this.generateCalendar();
+        this.generateMonthDays();
         this.loadHabitEntries();
     }
 
     nextMonth() {
         this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
-        this.generateCalendar();
+        this.generateMonthDays();
         this.loadHabitEntries();
-    }
-
-    isCurrentMonth(date: Date): boolean {
-        return date.getMonth() === this.currentMonth.getMonth();
     }
 
     isToday(date: Date): boolean {
         const today = new Date();
-        return date.toDateString() === today.toDateString();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
     }
 
     isFutureDate(date: Date): boolean {
@@ -176,11 +183,12 @@ export class HabitsComponent implements OnInit {
         return habitMap ? habitMap.get(dateStr) || false : false;
     }
 
-    toggleHabit(habit: Habit, date: Date) {
+    toggleHabit(habit: Habit, date: Date, event?: MouseEvent) {
         if (this.isFutureDate(date)) return;
         if (!habit.id) return;
 
         const dateStr = this.formatDate(date);
+        const isCurrentlyCompleted = this.isHabitCompleted(habit.id, date);
 
         this.habitService.toggleHabitEntry(habit.id, dateStr).subscribe({
             next: () => {
@@ -191,16 +199,83 @@ export class HabitsComponent implements OnInit {
                     this.habitEntries.set(habit.id!, habitMap);
                 }
 
-                const currentState = habitMap.get(dateStr) || false;
-                habitMap.set(dateStr, !currentState);
+                habitMap.set(dateStr, !isCurrentlyCompleted);
 
-                // Reload habits to update stats
+                // Reload habits to update backend stats
                 this.loadHabits();
+
+                // Trigger confetti if completing
+                if (!isCurrentlyCompleted && event) {
+                    this.triggerConfetti(event);
+                }
             },
             error: (err) => console.error('Failed to toggle habit', err)
         });
     }
 
+    triggerConfetti(event: MouseEvent) {
+        // Calculate relative position?
+        // Actually, just standard confetti blast from center or around cursor
+        // Let's do a simple blast from the click position
+
+        const rect = (event.target as HTMLElement).getBoundingClientRect();
+        // Normalized coordinates (0-1)
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+        confetti({
+            particleCount: 40,
+            spread: 60,
+            origin: { x, y },
+            colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+            disableForReducedMotion: true,
+            zIndex: 10000,
+        });
+    }
+
+    // Stats calculations mirroring the sheet
+    getMonthlyResult(habit: Habit): string {
+        if (!habit.id) return '0/' + this.monthDays.length;
+
+        const habitMap = this.habitEntries.get(habit.id);
+        if (!habitMap) return '0/' + this.monthDays.length;
+
+        let completed = 0;
+        this.monthDays.forEach(day => {
+            if (habitMap.get(this.formatDate(day))) completed++;
+        });
+
+        return `${completed}/${this.monthDays.length}`;
+    }
+
+    getMonthlySuccessPercentage(habit: Habit): number {
+        if (!habit.id) return 0;
+
+        const today = new Date();
+        const isCurrentMonth = this.currentMonth.getMonth() === today.getMonth() &&
+            this.currentMonth.getFullYear() === today.getFullYear();
+
+        let daysPassed = this.monthDays.length;
+        if (isCurrentMonth) {
+            daysPassed = today.getDate();
+        } else if (this.currentMonth > today) {
+            return 0;
+        }
+
+        const habitMap = this.habitEntries.get(habit.id);
+        if (!habitMap || daysPassed === 0) return 0;
+
+        let completed = 0;
+        for (let i = 0; i < daysPassed; i++) {
+            if (i < this.monthDays.length) {
+                if (habitMap.get(this.formatDate(this.monthDays[i]))) completed++;
+            }
+        }
+
+        return Math.round((completed / daysPassed) * 100);
+    }
+
+    // Modal Actions
     openAddHabitModal() {
         this.habitForm = {
             name: '',
@@ -238,6 +313,7 @@ export class HabitsComponent implements OnInit {
             next: (habit) => {
                 this.habits.push(habit);
                 this.closeAddHabitModal();
+                this.loadHabits();
             },
             error: (err) => {
                 console.error('Failed to create habit', err);
@@ -271,6 +347,7 @@ export class HabitsComponent implements OnInit {
         this.habitService.deleteHabit(habit.id).subscribe({
             next: () => {
                 this.habits = this.habits.filter(h => h.id !== habit.id);
+                this.habitEntries.delete(habit.id!);
             },
             error: (err) => {
                 console.error('Failed to delete habit', err);
@@ -279,38 +356,8 @@ export class HabitsComponent implements OnInit {
         });
     }
 
-    getCompletionPercentage(habit: Habit): number {
-        if (!habit.id) return 0;
-
-        const habitMap = this.habitEntries.get(habit.id);
-        if (!habitMap) return 0;
-
-        const daysInMonth = new Date(
-            this.currentMonth.getFullYear(),
-            this.currentMonth.getMonth() + 1,
-            0
-        ).getDate();
-
-        const today = new Date();
-        const currentDay = this.currentMonth.getMonth() === today.getMonth() &&
-            this.currentMonth.getFullYear() === today.getFullYear()
-            ? today.getDate()
-            : daysInMonth;
-
-        let completed = 0;
-        for (let i = 1; i <= currentDay; i++) {
-            const date = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth(), i);
-            const dateStr = this.formatDate(date);
-            if (habitMap.get(dateStr)) {
-                completed++;
-            }
-        }
-
-        return Math.round((completed / currentDay) * 100);
-    }
-
     goToDashboard() {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/app']);
     }
 
     logout() {

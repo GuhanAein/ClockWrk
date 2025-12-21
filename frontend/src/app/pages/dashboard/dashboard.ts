@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
 import { TaskService, Task, CustomList } from '../../services/task';
 import { AuthService } from '../../services/auth';
+// import { HabitsComponent } from '../habits/habits';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,43 +38,17 @@ export class DashboardComponent implements OnInit {
   timelineHours: number[] = [];
   pomoStartTime: Date | null = null;
 
-  // Habits State
-  habitUrlInput = '';
-  safeHabitUrl: SafeResourceUrl | null = null;
+
 
   constructor(
     private taskService: TaskService,
     private authService: AuthService,
-    private router: Router,
-    private sanitizer: DomSanitizer
+    private router: Router
   ) {
     this.generateTimeline();
-    this.loadHabitUrl();
   }
 
-  loadHabitUrl() {
-    const stored = localStorage.getItem('habitSheetUrl');
-    if (stored) {
-      // Ensure embed mode for cleaner look if standard link provided
-      // Replace /edit... with /edit?widget=true&headers=false if desired, or just trust iframe
-      // Actually simpler: just trust user input but sanitize
-      this.safeHabitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(stored);
-    }
-  }
 
-  saveHabitUrl() {
-    if (!this.habitUrlInput) return;
-    localStorage.setItem('habitSheetUrl', this.habitUrlInput);
-    this.loadHabitUrl();
-  }
-
-  resetHabitSettings() {
-    if (confirm('Disconnect this sheet?')) {
-      localStorage.removeItem('habitSheetUrl');
-      this.safeHabitUrl = null;
-      this.habitUrlInput = '';
-    }
-  }
 
   generateTimeline() {
     const currentHour = new Date().getHours();
@@ -226,13 +201,11 @@ export class DashboardComponent implements OnInit {
   }
 
   setFilter(filter: string) {
-    if (filter === 'habits') {
-      this.router.navigate(['/habits']);
-      return;
-    }
     this.currentFilter = filter;
     this.selectedTask = null; // Deselect on filter change
-    this.applyFilter();
+    if (filter !== 'habits') {
+      this.applyFilter();
+    }
   }
 
   applyFilter() {
@@ -474,5 +447,9 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => alert('Failed to change password')
     });
+  }
+
+  goToHabits() {
+    this.router.navigate(['/habits']);
   }
 }

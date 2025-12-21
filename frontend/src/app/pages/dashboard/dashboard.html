@@ -7,7 +7,10 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            ClockWrk
+            <div class="logo-text">
+                ClockWrk
+                <span class="beta-tag">beta</span>
+            </div>
         </div>
         <div class="profile-section" style="margin-bottom: 0; position: relative;" (click)="toggleProfileMenu()">
             <div class="avatar" *ngIf="!userAvatarUrl">{{ username.charAt(0).toUpperCase() }}</div>
@@ -159,7 +162,7 @@
                     </svg>
                     <span>Eisenhower Matrix</span>
                 </div>
-                <div class="nav-item" [class.active]="currentFilter === 'habits'" (click)="setFilter('habits')">
+                <div class="nav-item" (click)="goToHabits()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
@@ -451,48 +454,7 @@
                 </div>
             </div>
             <!-- Habits View -->
-            <div class="habits-container" *ngIf="currentFilter === 'habits'">
-                <div *ngIf="!safeHabitUrl" class="habits-setup">
-                    <div class="habits-icon-placeholder">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                    </div>
-                    <h2 class="habits-title">Setup Habit Tracker</h2>
-                    <p class="habits-desc">
-                        To enable personal habit tracking, please create your own copy of the official tracker sheet.
-                    </p>
 
-                    <div class="habits-step-1">
-                        <a href="https://docs.google.com/spreadsheets/d/1p0jTCvxNI1dMeQpJwOMKlbyuzyja7SD1q6MMdjwxKl8/copy"
-                            target="_blank" class="btn-create-sheet">
-                            Step 1: Create Sheet Copy
-                        </a>
-                    </div>
-
-                    <div class="habits-step-2">
-                        <label>Step 2: Paste your new Sheet URL</label>
-                        <div class="url-input-group">
-                            <input type="text" [(ngModel)]="habitUrlInput"
-                                placeholder="https://docs.google.com/spreadsheets/d/..." class="url-input">
-                            <button (click)="saveHabitUrl()" class="btn-save-url">Save</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div *ngIf="safeHabitUrl" class="habits-frame-wrapper">
-                    <div class="habits-frame-header">
-                        <h2>Habit Tracker</h2>
-                        <button (click)="resetHabitSettings()">Disconnect Sheet</button>
-                    </div>
-                    <iframe [src]="safeHabitUrl" class="habits-iframe" title="My Habits"></iframe>
-                </div>
-            </div>
         </div>
 
         <!-- Right: Detail/Calendar -->

@@ -40,6 +40,71 @@
     border-radius: 4px;
 }
 
+/* OAuth Divider */
+.oauth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: #888;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.oauth-divider span {
+    padding: 0 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* OAuth Buttons */
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.oauth-btn {
+    width: 100%;
+    padding: 0.85rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-family: 'Outfit', sans-serif;
+}
+
+.oauth-btn:hover {
+    border-color: #ccc;
+    background: #fafafa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.oauth-btn:active {
+    transform: translateY(0);
+}
+
+.google-btn {
+    color: #444;
+}
+
+.github-btn {
+    color: #24292e;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {
