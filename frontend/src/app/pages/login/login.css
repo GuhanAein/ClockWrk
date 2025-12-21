@@ -5,26 +5,32 @@
     align-items: center;
     justify-content: center;
     background-color: var(--bg-alt);
-    /* Light gray background */
+    padding: 1rem;
 }
 
 .auth-card {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     padding: 2.5rem;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     transform: translateY(0);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
 }
 
 .auth-title {
-    font-size: 1.75rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--text-main);
     margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
 }
 
 .auth-subtitle {
@@ -33,11 +39,61 @@
     margin-bottom: 2rem;
 }
 
+/* Mode Switcher */
+.mode-switcher {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.mode-switcher-inner {
+    background-color: #f1f5f9;
+    padding: 0.25rem;
+    border-radius: 8px;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.mode-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.mode-btn:hover:not(.active) {
+    color: var(--text-main);
+}
+
+/* Form Elements */
 .form-checkbox {
     width: 1.1em;
     height: 1.1em;
     accent-color: var(--primary);
     border-radius: 4px;
+    cursor: pointer;
+}
+
+.forgot-link {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
 }
 
 /* OAuth Divider */
@@ -45,21 +101,23 @@
     display: flex;
     align-items: center;
     text-align: center;
-    margin: 1.5rem 0;
-    color: #888;
+    margin: 1.75rem 0;
+    color: #94a3b8;
 }
 
 .oauth-divider::before,
 .oauth-divider::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .oauth-divider span {
     padding: 0 1rem;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* OAuth Buttons */
@@ -71,11 +129,11 @@
 
 .oauth-btn {
     width: 100%;
-    padding: 0.85rem;
-    border: 2px solid #e0e0e0;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: white;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -83,29 +141,56 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    font-family: 'Outfit', sans-serif;
+    font-family: inherit;
+    color: #475569;
 }
 
 .oauth-btn:hover {
-    border-color: #ccc;
-    background: #fafafa;
+    border-color: #cbd5e1;
+    background: #f8fafc;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .oauth-btn:active {
     transform: translateY(0);
+    box-shadow: none;
 }
 
-.google-btn {
-    color: #444;
+/* Bottom Link */
+.bottom-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
-.github-btn {
-    color: #24292e;
+.bottom-link {
+    color: var(--primary);
+    font-weight: 600;
 }
 
-/* Animations */
+.bottom-link:hover {
+    text-decoration: underline;
+}
+
+/* Spinner */
+.btn-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -120,4 +205,18 @@
 
 .fade-in {
     animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Error Alert */
+.error-alert {
+    background-color: #fef2f2;
+    color: #ef4444;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #fee2e2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }

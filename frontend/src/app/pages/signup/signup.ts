@@ -15,9 +15,15 @@ import { NavbarComponent } from '../../components/navbar/navbar';
 })
 export class SignupComponent {
   signupForm: FormGroup;
+  otpForm: FormGroup;
   loading = false;
   submitted = false;
   errorMessage = '';
+
+  // States
+  showOtpInput = false;
+  isOtpSent = false;
+  emailForOtp = '';
 
   constructor(
     private fb: FormBuilder,
@@ -30,37 +36,83 @@ export class SignupComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]]
     });
+
+    this.otpForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
+    });
   }
 
-  // Convenience getter for easy access to form fields
   get f() { return this.signupForm.controls; }
 
   onSubmit() {
     this.submitted = true;
     this.errorMessage = '';
 
-    // Stop here if form is invalid
-    if (this.signupForm.invalid) {
-      return;
-    }
+    if (this.signupForm.invalid) return;
 
     this.loading = true;
     const { name, email, password } = this.signupForm.value;
 
     this.authService.register({ name, email, password }).subscribe({
       next: (res) => {
-        console.log('Registration success', res);
-        // Navigate immediately, auth service manages token
         this.router.navigate(['/app']);
         this.loading = false;
       },
       error: (err) => {
-        console.error('Registration failed', err);
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
         this.loading = false;
       }
     });
   }
+
+  // OTP Logic (Same as login)
+  toggleOtpMode() {
+    this.showOtpInput = !this.showOtpInput;
+    this.errorMessage = '';
+    this.isOtpSent = false;
+  }
+
+  sendOtp() {
+    const email = this.otpForm.get('email')?.value;
+    if (!email) {
+      this.errorMessage = 'Please enter your email first';
+      return;
+    }
+
+    this.loading = true;
+    this.authService.sendOtp(email).subscribe({
+      next: () => {
+        this.isOtpSent = true;
+        this.emailForOtp = email;
+        this.loading = false;
+        this.errorMessage = '';
+        alert('OTP sent to your email!');
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to send OTP';
+        this.loading = false;
+      }
+    });
+  }
+
+  verifyOtp() {
+    const otp = this.otpForm.get('otp')?.value;
+    if (!otp) return;
+
+    this.loading = true;
+    this.authService.verifyOtp(this.emailForOtp, otp).subscribe({
+      next: (res) => {
+        this.router.navigate(['/app']);
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Invalid OTP';
+        this.loading = false;
+      }
+    });
+  }
+
 
   signupWithGoogle() {
     this.oauthService.loginWithGoogle();

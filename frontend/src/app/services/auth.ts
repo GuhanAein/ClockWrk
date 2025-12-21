@@ -32,6 +32,21 @@ export class AuthService {
     );
   }
 
+  sendOtp(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/otp/send`, null, { params: { email } });
+  }
+
+  verifyOtp(email: string, otp: string): Observable<any> {
+    const params = { email, otp };
+    return this.http.post(`${this.apiUrl}/otp/verify`, null, { params }).pipe(
+      tap((res: any) => {
+        if (res && res.accessToken) {
+          this.setToken(res.accessToken);
+        }
+      })
+    );
+  }
+
   logout() {
     localStorage.removeItem(this.TOKEN_KEY);
     this.router.navigate(['/login']);
