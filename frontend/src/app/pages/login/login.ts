@@ -24,6 +24,7 @@ export class LoginComponent {
   showOtpInput = false;
   isOtpSent = false;
   emailForOtp = '';
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,

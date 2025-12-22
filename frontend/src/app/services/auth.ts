@@ -47,6 +47,17 @@ export class AuthService {
     );
   }
 
+  verifySignupEmail(email: string, otp: string): Observable<any> {
+    const params = { email, otp };
+    return this.http.post(`${this.apiUrl}/verify-email`, null, { params }).pipe(
+      tap((res: any) => {
+        if (res && res.accessToken) {
+          this.setToken(res.accessToken);
+        }
+      })
+    );
+  }
+
   logout() {
     localStorage.removeItem(this.TOKEN_KEY);
     this.router.navigate(['/login']);

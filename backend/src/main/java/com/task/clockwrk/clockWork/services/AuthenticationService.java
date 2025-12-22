@@ -33,27 +33,32 @@ public class AuthenticationService {
         if(repository.existsByEmail(request.getEmail())) {
              throw new RuntimeException("Email already exists");
         }
+        
+        // Create user but mark as unverified
         var user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .emailVerified(false)
                 .build();
-        var savedUser = repository.save(user);
+        repository.save(user);
         
-        UserDetails userDetails = org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPasswordHash())
-                .authorities("USER")
-                .build();
-
-        var jwtToken = jwtService.generateToken(userDetails);
-        var refreshToken = jwtService.generateRefreshToken(userDetails);
+        // Send verification OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        user.setOtp(otp);
+        user.setOtpExpiry(Instant.now().plusSeconds(300)); // 5 mins
+        repository.save(user);
         
-        saveUserRefreshToken(savedUser, refreshToken);
-
+        emailService.sendEmail(
+            request.getEmail(), 
+            "Verify Your ClockWrk Account", 
+            "Welcome to ClockWrk! Your verification code is: " + otp + "\n\nThis code will expire in 5 minutes."
+        );
+        
+        // Return response indicating verification needed
         return AuthResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
+                .accessToken(null)
+                .refreshToken(null)
                 .build();
     }
 
@@ -104,6 +109,46 @@ public class AuthenticationService {
         repository.save(user);
         
         emailService.sendEmail(email, "Your Login OTP", "Your OTP is: " + otp);
+    }
+
+    public AuthResponse verifySignupEmail(String email, String otp) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+        if (user.getOtp() == null || user.getOtpExpiry() == null) {
+            throw new RuntimeException("Invalid OTP request");
+        }
+        
+        if (Instant.now().isAfter(user.getOtpExpiry())) {
+            throw new RuntimeException("OTP expired");
+        }
+        
+        if (!user.getOtp().equals(otp)) {
+             throw new RuntimeException("Invalid OTP");
+        }
+        
+        // Mark email as verified
+        user.setEmailVerified(true);
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        repository.save(user);
+        
+        // Generate tokens for the verified user
+        UserDetails userDetails = org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPasswordHash())
+                .authorities("USER")
+                .build();
+                
+        var jwtToken = jwtService.generateToken(userDetails);
+        var refreshToken = jwtService.generateRefreshToken(userDetails);
+        
+        saveUserRefreshToken(user, refreshToken);
+        
+        return AuthResponse.builder()
+                .accessToken(jwtToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     public AuthResponse verifyOtp(String email, String otp) {

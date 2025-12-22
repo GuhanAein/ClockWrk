@@ -44,4 +44,12 @@ public class AuthController {
     ) {
         return ResponseEntity.ok(service.verifyOtp(email, otp));
     }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthResponse> verifySignupEmail(
+            @RequestParam String email,
+            @RequestParam String otp
+    ) {
+        return ResponseEntity.ok(service.verifySignupEmail(email, otp));
+    }
 }

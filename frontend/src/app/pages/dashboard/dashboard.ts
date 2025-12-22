@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,6 +26,8 @@ export class DashboardComponent implements OnInit {
 
   selectedTask: Task | null = null;
   saveStatus = '';
+  activeMoveTaskId: string | null = null;
+  isSidebarOpen = true; // Sidebar toggle state
 
   // Pomodoro State
   pomoTime = 25 * 60; // 25 minutes in seconds
@@ -384,6 +386,10 @@ export class DashboardComponent implements OnInit {
     confirmPassword: ''
   };
 
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
   userAvatarUrl = '';
 
   onMatrixDrop(event: CdkDragDrop<Task[]>, newPriority: number) {
@@ -435,8 +441,53 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  toggleMoveMenu(event: Event, task: Task) {
+    event.stopPropagation();
+    if (this.activeMoveTaskId === task.id) {
+      this.activeMoveTaskId = null;
+    } else {
+      this.activeMoveTaskId = task.id || null;
+      // Optional: Close other menus if any
+      this.isProfileMenuOpen = false;
+    }
+  }
+
+  moveTask(task: Task, listName: string) {
+    if (!task.id) return;
+
+    // Optimistic update
+    const previousList = task.listName;
+    task.listName = listName;
+
+    // Close menu
+    this.activeMoveTaskId = null;
+
+    // Apply filter immediately (removes from view if inbox and moving out)
+    this.applyFilter();
+
+    this.taskService.updateTask(task.id, task).subscribe({
+      next: (updated) => {
+        // Confirm update
+        const index = this.tasks.findIndex(t => t.id === updated.id);
+        if (index !== -1) {
+          this.tasks[index] = updated;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to move task', err);
+        // Revert
+        task.listName = previousList;
+        this.applyFilter();
+        alert('Failed to move task');
+      }
+    });
+  }
+
   // Profile Methods
-  toggleProfileMenu() {
+  toggleProfileMenu(event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
   }
 
@@ -499,7 +550,21 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.activeMoveTaskId) {
+      this.activeMoveTaskId = null;
+    }
+    if (this.isProfileMenuOpen) {
+      this.isProfileMenuOpen = false;
+    }
+  }
+
   goToHabits() {
     this.router.navigate(['/habits']);
+  }
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
   }
 }

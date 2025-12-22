@@ -56,14 +56,29 @@ export class HabitsComponent implements OnInit {
         private router: Router
     ) { }
 
-    ngOnInit() {
-        if (!this.authService.isAuthenticated()) {
-            this.router.navigate(['/login']);
-            return;
-        }
 
-        this.generateMonthDays();
-        this.loadHabits();
+    // View State
+    viewMode: 'monthly' | 'weekly' = 'weekly'; // Default to weekly for better focus
+
+    // Weekly Stats
+    weeklySummary = {
+        grade: 0,
+        gradeLetter: 'F',
+        perfectDays: 0,
+        completedCount: 0,
+        totalDue: 0
+    };
+
+    currentWeekStart: Date = new Date();
+    weekDates: Date[] = [];
+
+    get displayedDays(): Date[] {
+        return this.viewMode === 'weekly' ? this.weekDates : this.monthDays;
+    }
+
+    setViewMode(mode: 'weekly' | 'monthly') {
+        this.viewMode = mode;
+        this.loadHabitEntries();
     }
 
     get filteredHabits(): Habit[] {
@@ -91,21 +106,121 @@ export class HabitsComponent implements OnInit {
         return result;
     }
 
+    ngOnInit() {
+        if (!this.authService.isAuthenticated()) {
+            this.router.navigate(['/login']);
+            return;
+        }
+
+        this.generateMonthDays();
+        this.generatecurrentWeekDates();
+        this.loadHabits();
+        // Load entries after week dates are generated
+        this.loadHabitEntries();
+    }
+
+    generatecurrentWeekDates() {
+        const curr = new Date(); // get current date
+        const first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
+        // Note: This assumes Sunday is first day (0). If Monday is first, logic tweaks needed.
+
+        this.currentWeekStart = new Date(curr.setDate(first));
+        this.weekDates = [];
+        for (let i = 0; i < 7; i++) {
+            const next = new Date(this.currentWeekStart);
+            next.setDate(this.currentWeekStart.getDate() + i);
+            this.weekDates.push(next);
+        }
+    }
+
+    calculateWeeklySummary() {
+        let totalOpportunities = 0;
+        let totalCompleted = 0;
+        let perfectDaysCount = 0;
+
+        // Calculate Grade
+        this.weekDates.forEach(date => {
+            if (this.isFutureDate(date)) return;
+
+            let dayOpportunities = 0;
+            let dayCompleted = 0;
+
+            this.habits.forEach(habit => {
+                if (habit.archived) return;
+
+                if (habit.frequency === 'daily') {
+                    dayOpportunities++;
+                    if (this.isHabitCompleted(habit.id!, date)) {
+                        dayCompleted++;
+                    }
+                }
+            });
+
+            totalOpportunities += dayOpportunities;
+            totalCompleted += dayCompleted;
+
+            if (dayOpportunities > 0 && dayCompleted === dayOpportunities) {
+                perfectDaysCount++;
+            }
+        });
+
+        // Weekly Habits Logic
+        this.habits.filter(h => h.frequency === 'weekly').forEach(habit => {
+            totalOpportunities += habit.targetCount;
+            let doneThisWeek = 0;
+            this.weekDates.forEach(d => {
+                if (this.isHabitCompleted(habit.id!, d)) doneThisWeek++;
+            });
+            totalCompleted += Math.min(doneThisWeek, habit.targetCount);
+        });
+
+        this.weeklySummary.completedCount = totalCompleted;
+        this.weeklySummary.totalDue = totalOpportunities;
+        this.weeklySummary.perfectDays = perfectDaysCount;
+
+        const percentage = totalOpportunities > 0 ? (totalCompleted / totalOpportunities) * 100 : 0;
+        this.weeklySummary.grade = Math.round(percentage);
+
+        if (percentage >= 97) this.weeklySummary.gradeLetter = 'A+';
+        else if (percentage >= 93) this.weeklySummary.gradeLetter = 'A';
+        else if (percentage >= 90) this.weeklySummary.gradeLetter = 'A-';
+        else if (percentage >= 87) this.weeklySummary.gradeLetter = 'B+';
+        else if (percentage >= 83) this.weeklySummary.gradeLetter = 'B';
+        else if (percentage >= 80) this.weeklySummary.gradeLetter = 'B-';
+        else if (percentage >= 77) this.weeklySummary.gradeLetter = 'C+';
+        else if (percentage >= 73) this.weeklySummary.gradeLetter = 'C';
+        else if (percentage >= 70) this.weeklySummary.gradeLetter = 'C-';
+        else if (percentage >= 60) this.weeklySummary.gradeLetter = 'D';
+        else this.weeklySummary.gradeLetter = 'F';
+    }
+
     loadHabits() {
         this.habitService.getAllHabits().subscribe({
             next: (habits) => {
                 this.habits = habits;
                 this.loadHabitEntries();
+                // Recalculate summary after loading
+                this.calculateWeeklySummary();
             },
             error: (err) => console.error('Failed to load habits', err)
         });
     }
 
     loadHabitEntries() {
-        const year = this.currentMonth.getFullYear();
-        const month = this.currentMonth.getMonth();
-        const startDate = new Date(year, month, 1);
-        const endDate = new Date(year, month + 1, 0);
+        let startDate: Date;
+        let endDate: Date;
+
+        if (this.viewMode === 'weekly') {
+            // Load entries for the current week
+            startDate = new Date(this.weekDates[0]);
+            endDate = new Date(this.weekDates[this.weekDates.length - 1]);
+        } else {
+            // Load entries for the current month
+            const year = this.currentMonth.getFullYear();
+            const month = this.currentMonth.getMonth();
+            startDate = new Date(year, month, 1);
+            endDate = new Date(year, month + 1, 0);
+        }
 
         const startStr = this.formatDate(startDate);
         const endStr = this.formatDate(endDate);
@@ -124,6 +239,11 @@ export class HabitsComponent implements OnInit {
                     }
 
                     this.habitEntries.set(habitId, habitMap);
+                }
+
+                // Recalculate weekly summary after loading entries
+                if (this.viewMode === 'weekly') {
+                    this.calculateWeeklySummary();
                 }
             },
             error: (err) => console.error('Failed to load habit entries', err)
@@ -163,7 +283,11 @@ export class HabitsComponent implements OnInit {
     isFutureDate(date: Date): boolean {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return date > today;
+
+        const compareDate = new Date(date);
+        compareDate.setHours(0, 0, 0, 0);
+
+        return compareDate > today;
     }
 
     formatDate(date: Date): string {

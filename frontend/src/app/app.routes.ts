@@ -13,9 +13,11 @@ export const routes: Routes = [
     { path: '', component: LandingComponent },
     { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
     { path: 'signup', component: SignupComponent, canActivate: [guestGuard] },
-    { path: 'app', component: DashboardComponent, canActivate: [authGuard] },
+    { path: 'app', component: DashboardComponent, canActivate: [authGuard] }, 
     { path: 'habits', component: HabitsComponent, canActivate: [authGuard] },
+    { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy').then(m => m.PrivacyComponent) },
     { path: 'pricing', loadComponent: () => import('./pages/pricing/pricing').then(m => m.PricingComponent) },
+    { path: 'download', loadComponent: () => import('./pages/download/download').then(m => m.DownloadComponent) },
     { path: 'oauth2/redirect', component: OAuthRedirectComponent },
     { path: '**', redirectTo: '' }
 ];

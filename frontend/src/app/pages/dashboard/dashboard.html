@@ -12,7 +12,7 @@
                 <span class="beta-tag">beta</span>
             </div>
         </div>
-        <div class="profile-section" style="margin-bottom: 0; position: relative;" (click)="toggleProfileMenu()">
+        <div class="profile-section" style="margin-bottom: 0; position: relative;" (click)="toggleProfileMenu($event)">
             <div class="avatar" *ngIf="!userAvatarUrl">{{ username.charAt(0).toUpperCase() }}</div>
             <img *ngIf="userAvatarUrl" [src]="userAvatarUrl" class="avatar" style="object-fit: cover;">
             <div class="username">{{ username }}</div>
@@ -95,15 +95,41 @@
                 <div *ngIf="activeProfileTab === 'security'">
                     <div class="form-group">
                         <label class="detail-label">Current Password</label>
-                        <input type="password" [(ngModel)]="passwordData.currentPassword" class="detail-date-input">
+                        <div style="position: relative;">
+                            <input [type]="showCurrentPassword ? 'text' : 'password'"
+                                [(ngModel)]="passwordData.currentPassword" class="detail-date-input"
+                                style="padding-right: 32px;">
+                            <button (click)="showCurrentPassword = !showCurrentPassword"
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
+                                type="button">
+                                {{ showCurrentPassword ? 'Hide' : 'Show' }}
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="detail-label">New Password</label>
-                        <input type="password" [(ngModel)]="passwordData.newPassword" class="detail-date-input">
+                        <div style="position: relative;">
+                            <input [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="passwordData.newPassword"
+                                class="detail-date-input" style="padding-right: 32px;">
+                            <button (click)="showNewPassword = !showNewPassword"
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
+                                type="button">
+                                {{ showNewPassword ? 'Hide' : 'Show' }}
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="detail-label">Confirm New Password</label>
-                        <input type="password" [(ngModel)]="passwordData.confirmPassword" class="detail-date-input">
+                        <div style="position: relative;">
+                            <input [type]="showConfirmPassword ? 'text' : 'password'"
+                                [(ngModel)]="passwordData.confirmPassword" class="detail-date-input"
+                                style="padding-right: 32px;">
+                            <button (click)="showConfirmPassword = !showConfirmPassword"
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
+                                type="button">
+                                {{ showConfirmPassword ? 'Hide' : 'Show' }}
+                            </button>
+                        </div>
                     </div>
 
                     <div class="modal-footer" style="padding: 0; background: none; margin-top: 2rem;">
@@ -117,11 +143,21 @@
 
     <div class="dashboard-body">
         <!-- Left Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" *ngIf="isSidebarOpen">
             <!-- Profile moved to Top Navbar -->
 
             <div class="nav-group">
-                <div class="nav-header">Overview</div>
+                <div class="nav-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Overview</span>
+                    <button class="sidebar-toggle-btn" (click)="toggleSidebar()" title="Close Sidebar"
+                        style="padding: 0.25rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
                 <div class="nav-item" [class.active]="currentFilter === 'today'" (click)="setFilter('today')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -210,6 +246,15 @@
 
         <!-- Middle: Task List -->
         <div class="main-content">
+            <!-- Open Sidebar Button (when closed) -->
+            <button class="sidebar-open-btn" *ngIf="!isSidebarOpen" (click)="toggleSidebar()" title="Open Sidebar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+
             <div class="list-header" *ngIf="currentFilter !== 'focus' && currentFilter !== 'matrix'">
                 <div class="list-title">
                     {{ currentFilter | titlecase }}
@@ -277,15 +322,49 @@
                             </div>
                         </div>
 
-                        <button (click)="deleteTask(task); $event.stopPropagation()" class="delete-btn">
-                            <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path
-                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                </path>
-                            </svg>
-                        </button>
+                        <div class="task-actions" style="display: flex; align-items: center; gap: 4px;">
+                            <div style="position: relative;">
+                                <button (click)="toggleMoveMenu($event, task)" class="action-btn" title="Move to...">
+                                    <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path
+                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                        </path>
+                                    </svg>
+                                </button>
+                                <div class="move-dropdown" *ngIf="activeMoveTaskId === task.id"
+                                    (click)="$event.stopPropagation()">
+                                    <div class="dropdown-header">Move to...</div>
+                                    <div class="move-option" (click)="moveTask(task, 'Inbox')">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                            <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                                            <path
+                                                d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z">
+                                            </path>
+                                        </svg>
+                                        Inbox
+                                    </div>
+                                    <div class="move-option" *ngFor="let list of customLists"
+                                        (click)="moveTask(task, list.name)">
+                                        <span
+                                            style="width:8px; height:8px; background:#6C63FF; border-radius:50%; margin-right: 8px; display: inline-block;"></span>
+                                        {{ list.name }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button (click)="deleteTask(task); $event.stopPropagation()" class="delete-btn"
+                                title="Delete">
+                                <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
                         <!-- Small hack: we need to make delete btn visible on hover. Add to CSS. -->
                     </div>
                 </div>

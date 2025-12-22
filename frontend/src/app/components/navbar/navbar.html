@@ -12,9 +12,9 @@
             </div>
         </div>
         <div class="nav-links">
-            <a href="#" class="nav-link">Features</a>
+            <a routerLink="/features" class="nav-link">Features</a>
             <a routerLink="/pricing" class="nav-link">Pricing</a>
-            <a href="#" class="nav-link">Download</a>
+            <a routerLink="/download" class="nav-link">Download</a>
 
             <ng-container *ngIf="!authService.isAuthenticated()">
                 <a routerLink="/login" class="nav-link">Sign In</a>

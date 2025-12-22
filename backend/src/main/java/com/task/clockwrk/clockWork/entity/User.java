@@ -33,6 +33,9 @@ public class User {
     private Instant otpExpiry;
 
     @lombok.Builder.Default
+    private Boolean emailVerified = false;
+
+    @lombok.Builder.Default
     private Instant createdAt = Instant.now();
 
 }

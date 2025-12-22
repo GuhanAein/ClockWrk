@@ -45,8 +45,16 @@
 
             <div class="form-group">
                 <label class="form-label">Password</label>
-                <input type="password" formControlName="password" class="form-input"
-                    [class.is-invalid]="submitted && f['password'].errors" placeholder="••••••••">
+                <div style="position: relative;">
+                    <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="form-input"
+                        [class.is-invalid]="submitted && f['password'].errors" placeholder="••••••••"
+                        style="padding-right: 32px;">
+                    <button (click)="showPassword = !showPassword"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
+                        type="button">
+                        {{ showPassword ? 'Hide' : 'Show' }}
+                    </button>
+                </div>
                 <div *ngIf="submitted && f['password'].errors" class="text-error text-xs mt-1">
                     <div *ngIf="f['password'].errors['required']">Password is required</div>
                 </div>
@@ -82,14 +90,13 @@
 
                 <div class="form-group" *ngIf="isOtpSent">
                     <div class="text-center mb-6">
-                        <p class="text-sm text-gray-600">Enter the 6-digit code sent to</p>
-                        <p class="font-medium text-main">{{ emailForOtp }}</p>
+                        <p class="text-sm" style="color: #64748b;">Enter the 6-digit code sent to</p>
+                        <p class="font-medium" style="color: var(--primary); margin-top: 0.25rem;">{{ emailForOtp }}</p>
                     </div>
 
                     <label class="form-label text-center">One-Time Password</label>
-                    <input type="text" formControlName="otp"
-                        class="form-input text-center text-xl tracking-widest font-mono" placeholder="000000"
-                        maxlength="6">
+                    <input type="text" formControlName="otp" class="form-input text-center tracking-widest font-mono"
+                        placeholder="000000" maxlength="6" style="font-size: 1.1rem; letter-spacing: 0.3em;">
 
                     <button type="button" (click)="verifyOtp()" class="btn btn-primary w-full mt-6"
                         [disabled]="loading || otpForm.get('otp')?.invalid">
@@ -99,7 +106,7 @@
 
                     <div class="text-center mt-4">
                         <button type="button" (click)="isOtpSent = false"
-                            class="text-sm text-muted hover:text-main transition-colors">
+                            style="background: none; border: none; font-size: 0.85rem; color: #64748b; cursor: pointer; font-weight: 500; transition: color 0.2s;">
                             Change Email
                         </button>
                     </div>

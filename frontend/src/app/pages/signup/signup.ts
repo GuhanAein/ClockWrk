@@ -24,6 +24,8 @@ export class SignupComponent {
   showOtpInput = false;
   isOtpSent = false;
   emailForOtp = '';
+  showPassword = false;
+  isVerifyingEmail = false; // New state for signup email verification
 
   constructor(
     private fb: FormBuilder,
@@ -56,11 +58,31 @@ export class SignupComponent {
 
     this.authService.register({ name, email, password }).subscribe({
       next: (res) => {
+        // Registration successful, now show OTP verification
+        this.isVerifyingEmail = true;
+        this.emailForOtp = email;
+        this.loading = false;
+        this.errorMessage = '';
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
+        this.loading = false;
+      }
+    });
+  }
+
+  verifySignupEmail() {
+    const otp = this.otpForm.get('otp')?.value;
+    if (!otp) return;
+
+    this.loading = true;
+    this.authService.verifySignupEmail(this.emailForOtp, otp).subscribe({
+      next: (res) => {
         this.router.navigate(['/app']);
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
+        this.errorMessage = err.error?.message || 'Invalid OTP';
         this.loading = false;
       }
     });

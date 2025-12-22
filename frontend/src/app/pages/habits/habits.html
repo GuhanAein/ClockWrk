@@ -49,6 +49,38 @@
         </div>
     </header>
 
+    <!-- Summary Dashboard -->
+    <div class="summary-dashboard" *ngIf="viewMode === 'weekly'">
+        <div class="summary-card grade-card">
+            <div class="card-title">Weekly Grade</div>
+            <div class="grade-circle" [attr.data-grade]="weeklySummary.gradeLetter">
+                {{ weeklySummary.gradeLetter }}
+                <span class="grade-percent">{{ weeklySummary.grade }}%</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-title">Completed</div>
+            <div class="card-value">{{ weeklySummary.completedCount }} <span class="card-sub">/ {{
+                    weeklySummary.totalDue }}</span></div>
+        </div>
+        <div class="summary-card">
+            <div class="card-title">Perfect Days</div>
+            <div class="card-value">{{ weeklySummary.perfectDays }} <span class="card-sub">days</span></div>
+        </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="view-toggle-bar">
+        <div class="toggle-group">
+            <button class="toggle-btn" [class.active]="viewMode === 'weekly'" (click)="setViewMode('weekly')">
+                Weekly Focus
+            </button>
+            <button class="toggle-btn" [class.active]="viewMode === 'monthly'" (click)="setViewMode('monthly')">
+                Monthly Sheet
+            </button>
+        </div>
+    </div>
+
     <!-- Sheet View (Scrollable Table) -->
     <div class="sheet-viewport">
         <div class="sheet-table">
@@ -56,18 +88,17 @@
             <div class="sheet-row header-row">
                 <div class="sheet-cell sticky-col name-col">Habit</div>
                 <div class="sheet-cell info-col">Goal</div>
-                <div class="sheet-cell info-col">Frequency</div>
+                <div class="sheet-cell info-col">Freq</div>
 
                 <!-- Day Columns -->
-                <div class="sheet-cell day-col" *ngFor="let day of monthDays" [class.today-header]="isToday(day)">
+                <div class="sheet-cell day-col" *ngFor="let day of displayedDays" [class.today-header]="isToday(day)">
                     <div class="day-number">{{ day.getDate() }}</div>
                     <div class="day-name">{{ weekDays[day.getDay()] }}</div>
                 </div>
 
                 <!-- Stats Columns -->
-                <div class="sheet-cell stat-col">Monthly</div>
+                <div class="sheet-cell stat-col">Result</div>
                 <div class="sheet-cell stat-col">Streak</div>
-                <div class="sheet-cell stat-col">Best</div>
                 <div class="sheet-cell stat-col success-col">Success %</div>
             </div>
 
@@ -77,18 +108,22 @@
                     <span class="habit-icon">{{ habit.icon }}</span>
                     <div class="habit-details">
                         <span class="habit-name">{{ habit.name }}</span>
-                        <span class="habit-category-badge" [style.background-color]="habit.color + '20'"
-                            [style.color]="habit.color">
-                            {{ habit.category }}
-                        </span>
+                        <div class="habit-meta">
+                            <span class="habit-category-badge" [style.background-color]="habit.color + '20'"
+                                [style.color]="habit.color">
+                                {{ habit.category }}
+                            </span>
+                            <span class="habit-freq-badge" *ngIf="habit.frequency === 'weekly'">Weekly</span>
+                        </div>
                     </div>
                     <button class="edit-btn" (click)="openEditHabitModal(habit)">✎</button>
                 </div>
                 <div class="sheet-cell info-cell" title="{{ habit.description }}">{{ habit.description || '-' }}</div>
-                <div class="sheet-cell info-cell">{{ habit.frequency | titlecase }}</div>
+                <div class="sheet-cell info-cell">{{ habit.frequency === 'daily' ? 'Daily' : habit.targetCount + '/wk'
+                    }}</div>
 
                 <!-- Day Checkboxes -->
-                <div class="sheet-cell day-cell" *ngFor="let day of monthDays"
+                <div class="sheet-cell day-cell" *ngFor="let day of displayedDays"
                     [class.weekend]="day.getDay() === 0 || day.getDay() === 6" [class.today]="isToday(day)"
                     [class.future]="isFutureDate(day)" (click)="toggleHabit(habit, day, $event)">
                     <div class="checkbox" [class.checked]="isHabitCompleted(habit.id!, day)"
@@ -101,7 +136,6 @@
                 <!-- Stats Values -->
                 <div class="sheet-cell stat-cell">{{ getMonthlyResult(habit) }}</div>
                 <div class="sheet-cell stat-cell highlight-stat">{{ habit.stats?.currentStreak || 0 }}</div>
-                <div class="sheet-cell stat-cell">{{ habit.stats?.longestStreak || 0 }}</div>
                 <div class="sheet-cell stat-cell success-cell">
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill" [style.width.%]="getMonthlySuccessPercentage(habit)"
