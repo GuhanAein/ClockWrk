@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class OAuthService {
-    private readonly BACKEND_URL = 'http://localhost:8080';
+    private readonly BACKEND_URL = environment.baseUrl;
     private readonly GOOGLE_AUTH_URL = `${this.BACKEND_URL}/oauth2/authorization/google`;
     private readonly GITHUB_AUTH_URL = `${this.BACKEND_URL}/oauth2/authorization/github`;
 

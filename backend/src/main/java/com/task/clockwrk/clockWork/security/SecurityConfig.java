@@ -53,11 +53,24 @@ public class SecurityConfig {
 
         return http.build();
     }
+    
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        System.out.println("========================================");
+        System.out.println("SecurityConfig initialized!");
+        System.out.println("CustomOAuth2UserService: " + customOAuth2UserService);
+        System.out.println("OAuth2LoginSuccessHandler: " + oauth2LoginSuccessHandler);
+        System.out.println("========================================");
+    }
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        // Allow both localhost and production frontend URL
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

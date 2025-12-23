@@ -70,7 +70,7 @@
                     <div *ngIf="f['password'].errors['minlength']">Password must be at least 8 characters</div>
                 </div>
                 <!-- Optional hint text, making it distinct -->
-                <p class="text-muted text-xs mt-1">Must be at least 8 characters</p>
+                <p class="mt-1" style="font-size: 11px; color: #94a3b8;">Must be at least 8 characters</p>
             </div>
 
             <button type="submit" class="btn btn-primary w-full" [disabled]="loading">
@@ -114,7 +114,8 @@
                 <div class="form-group" *ngIf="!isOtpSent">
                     <label class="form-label">Email Address</label>
                     <input type="email" formControlName="email" class="form-input" placeholder="name@company.com">
-                    <p class="text-muted text-sm mt-2">We'll check if you have an account or create a new one.</p>
+                    <p class="mt-2" style="font-size: 11px; color: #94a3b8;">We'll check if you have an account or
+                        create a new one.</p>
                     <div class="mt-4">
                         <button type="button" (click)="sendOtp()" class="btn btn-primary w-full" [disabled]="loading">
                             <span *ngIf="loading" class="btn-spinner"></span>

@@ -4,6 +4,7 @@
     <div class="text-center mb-8">
         <h1 class="pricing-title">Simple, transparent pricing</h1>
         <p class="pricing-subtitle">Supercharge your productivity with AI</p>
+        <div class="free-banner">🎉 First Year Free for Everybody! 🎉</div>
     </div>
 
     <!-- Billing Toggle -->
@@ -22,6 +23,7 @@
                 <h3 class="plan-name">{{ plan.name }}</h3>
                 <div class="plan-price">
                     <span class="currency">₹</span>
+                    <span *ngIf="plan.originalPrice" class="original-price">{{ plan.originalPrice }}</span>
                     <span class="amount">{{ plan.price }}</span>
                     <span class="period" *ngIf="plan.period">{{ plan.period }}</span>
                 </div>

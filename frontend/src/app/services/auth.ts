@@ -3,11 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
   private TOKEN_KEY = 'auth_token';
 
   constructor(private http: HttpClient, private router: Router) { }
@@ -77,20 +79,20 @@ export class AuthService {
 
   // Profile Management
   getProfile(): Observable<any> {
-    return this.http.get('http://localhost:8080/api/users/me');
+    return this.http.get(`${environment.apiUrl}/users/me`);
   }
 
   updateProfile(data: any): Observable<any> {
-    return this.http.put('http://localhost:8080/api/users/profile', data);
+    return this.http.put(`${environment.apiUrl}/users/profile`, data);
   }
 
   changePassword(data: any): Observable<any> {
-    return this.http.put('http://localhost:8080/api/users/password', data);
+    return this.http.put(`${environment.apiUrl}/users/password`, data);
   }
 
   uploadAvatar(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post('http://localhost:8080/api/upload', formData);
+    return this.http.post(`${environment.apiUrl}/upload`, formData);
   }
 }

@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth';
@@ -13,7 +13,7 @@ import { NavbarComponent } from '../../components/navbar/navbar';
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   otpForm: FormGroup;
   loading = false;
@@ -30,7 +30,8 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private oauthService: OAuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -40,6 +41,16 @@ export class LoginComponent {
     this.otpForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
+    });
+  }
+
+  ngOnInit() {
+    // Check for OAuth error parameters
+    this.route.queryParams.subscribe(params => {
+      if (params['error']) {
+        const message = params['message'] || 'Authentication failed';
+        this.errorMessage = message;
+      }
     });
   }
 

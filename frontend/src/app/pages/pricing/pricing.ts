@@ -36,8 +36,11 @@ export class PricingComponent {
       },
       {
         name: 'Pro AI',
-        price: this.isYearly ? '499' : '69',
-        period: this.isYearly ? '/year' : '/month',
+        // If yearly, price is 0 for first year
+        price: this.isYearly ? '0' : '69',
+        // Show original price only for yearly to indicate discount/free
+        originalPrice: this.isYearly ? '499' : null,
+        period: this.isYearly ? '/first year' : '/month',
         currency: 'INR',
         features: [
           '✨ Smart AI Habit Insights',
@@ -48,7 +51,7 @@ export class PricingComponent {
           'Priority Support',
           'Data Export (CSV/PDF)'
         ],
-        cta: 'Upgrade to Pro AI',
+        cta: this.isYearly ? 'Claim Free Year' : 'Upgrade to Pro AI',
         active: false,
         highlight: true
       }
@@ -63,6 +66,13 @@ export class PricingComponent {
     if (plan.active) return;
 
     const amount = parseInt(plan.price) * 100; // INR subunits (paise)
+
+    // specific check for Free Year claim
+    if (amount === 0) {
+      alert("🎉 Congratulations! You have claimed your Free First Year of Pro AI.");
+      // Logic to upgrade user server-side would go here
+      return;
+    }
 
     const options = {
       key: this.RAZORPAY_KEY_ID,

@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -17,8 +18,16 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        System.out.println("========================================");
+        System.out.println("CustomOAuth2UserService BEAN CREATED!");
+        System.out.println("========================================");
+    }
 
     @Override
+    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         System.out.println("=== CustomOAuth2UserService.loadUser called ===");
         
@@ -54,10 +63,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .email(email)
                     .name(name != null ? name : email.split("@")[0])
                     .profilePictureUrl(picture)
-                    .passwordHash("") // OAuth users don't have password
+                    .passwordHash("OAUTH_USER_NO_PASSWORD") // OAuth users don't have password
+                    .emailVerified(true) // OAuth emails are pre-verified
                     .createdAt(Instant.now())
                     .build();
-            userRepository.save(user);
+            user = userRepository.saveAndFlush(user); // Flush immediately to DB
             System.out.println("Created new user: " + email + " (ID: " + user.getId() + ")");
         }
 
