@@ -1,0 +1,10 @@
+[phases.setup]
+nixPkgs = ["jdk21", "maven"]
+
+[phases.install]
+cmds = [
+  "mvn clean package -DskipTests"
+]
+
+[start]
+cmd = "java -jar target/clockWork-0.0.1-SNAPSHOT.jar"
