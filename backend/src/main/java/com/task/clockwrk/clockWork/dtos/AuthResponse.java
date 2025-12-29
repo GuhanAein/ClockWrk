@@ -1,5 +1,7 @@
 package com.task.clockwrk.clockWork.dtos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,7 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthResponse {
     private String accessToken;
     private String refreshToken;
+    private Long expiresIn;
+    
+    @Builder.Default
+    private Boolean requiresVerification = false;
 }

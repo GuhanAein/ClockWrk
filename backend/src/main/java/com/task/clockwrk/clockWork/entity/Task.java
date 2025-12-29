@@ -29,6 +29,20 @@ public class Task {
     private boolean completed;
 
     private LocalDate dueDate;
+    
+    // Time-based scheduling for calendar view
+    @Column(name = "start_time")
+    private Instant startTime; // When the task is scheduled to start
+    
+    @Column(name = "end_time")
+    private Instant endTime; // When the task is scheduled to end
+    
+    @Column(name = "all_day")
+    @Builder.Default
+    private Boolean allDay = true; // True if task has no specific time
+    
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes; // Estimated duration in minutes
 
     private int priority; // 0: None, 1: Low, 2: Medium, 3: High
 

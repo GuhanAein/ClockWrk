@@ -1,8 +1,10 @@
 package com.task.clockwrk.clockWork.security;
 
-import com.task.clockwrk.clockWork.entity.User;
-import com.task.clockwrk.clockWork.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -10,27 +12,26 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.Optional;
+import com.task.clockwrk.clockWork.entity.User;
+import com.task.clockwrk.clockWork.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final UserRepository userRepository;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String OAUTH_PASSWORD_PREFIX = "OAUTH_";
     
-    @jakarta.annotation.PostConstruct
-    public void init() {
-        System.out.println("========================================");
-        System.out.println("CustomOAuth2UserService BEAN CREATED!");
-        System.out.println("========================================");
-    }
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        System.out.println("=== CustomOAuth2UserService.loadUser called ===");
-        
         OAuth2User oauth2User = super.loadUser(userRequest);
         
         String email = oauth2User.getAttribute("email");
@@ -38,40 +39,52 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String picture = oauth2User.getAttribute("picture");
         String provider = userRequest.getClientRegistration().getRegistrationId();
 
-        System.out.println("OAuth2 Provider: " + provider);
-        System.out.println("Email: " + email);
-        System.out.println("Name: " + name);
-        System.out.println("Picture: " + picture);
+        log.info("OAuth2 login attempt - Provider: {}, Email: {}", provider, email);
+
+        if (email == null) {
+            log.error("OAuth2 login failed - no email provided by {}", provider);
+            throw new OAuth2AuthenticationException("Email not provided by OAuth2 provider");
+        }
 
         // Find or create user
         Optional<User> existingUser = userRepository.findByEmail(email);
-        User user;
         
         if (existingUser.isPresent()) {
-            System.out.println("User already exists, updating...");
-            user = existingUser.get();
+            User user = existingUser.get();
             // Update profile picture if changed
             if (picture != null && !picture.equals(user.getProfilePictureUrl())) {
                 user.setProfilePictureUrl(picture);
                 userRepository.save(user);
-                System.out.println("Updated profile picture for user: " + email);
+                log.debug("Updated profile picture for OAuth user: {}", email);
             }
+            log.info("Existing user logged in via OAuth2: {}", email);
         } else {
-            System.out.println("Creating new user for OAuth login...");
-            // Create new user for OAuth login
-            user = User.builder()
+            // Create new user for OAuth login with secure random password
+            String secureRandomPassword = generateSecureRandomPassword();
+            
+            User user = User.builder()
                     .email(email)
                     .name(name != null ? name : email.split("@")[0])
                     .profilePictureUrl(picture)
-                    .passwordHash("OAUTH_USER_NO_PASSWORD") // OAuth users don't have password
+                    .passwordHash(passwordEncoder.encode(OAUTH_PASSWORD_PREFIX + secureRandomPassword))
                     .emailVerified(true) // OAuth emails are pre-verified
                     .createdAt(Instant.now())
                     .build();
-            user = userRepository.saveAndFlush(user); // Flush immediately to DB
-            System.out.println("Created new user: " + email + " (ID: " + user.getId() + ")");
+            
+            userRepository.saveAndFlush(user);
+            log.info("Created new OAuth2 user: {} (Provider: {})", email, provider);
         }
 
-        System.out.println("=== End CustomOAuth2UserService.loadUser ===");
         return oauth2User;
+    }
+
+    private String generateSecureRandomPassword() {
+        byte[] randomBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(randomBytes);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : randomBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
