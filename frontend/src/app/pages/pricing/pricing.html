@@ -4,7 +4,7 @@
     <div class="text-center mb-8">
         <h1 class="pricing-title">Simple, transparent pricing</h1>
         <p class="pricing-subtitle">Supercharge your productivity with AI</p>
-        <div class="free-banner">🎉 First Year Free for Everybody! 🎉</div>
+        <div class="free-banner">🎉 Special Intro Offer: ₹119 for First Year! 🎉</div>
     </div>
 
     <!-- Billing Toggle -->
@@ -14,7 +14,7 @@
             <div class="toggle-slider" [class.slide-right]="isYearly"></div>
         </div>
         <span [class.active-period]="isYearly" class="billing-label">Yearly <span class="discount-badge">SAVE
-                40%</span></span>
+                80%</span></span>
     </div>
 
     <div class="pricing-grid">
@@ -26,6 +26,8 @@
                     <span *ngIf="plan.originalPrice" class="original-price">{{ plan.originalPrice }}</span>
                     <span class="amount">{{ plan.price }}</span>
                     <span class="period" *ngIf="plan.period">{{ plan.period }}</span>
+                </div>
+                <div *ngIf="plan.renewalPrice" class="renewal-text text-sm text-gray-500 mt-2">{{ plan.renewalPrice }}
                 </div>
             </div>
 

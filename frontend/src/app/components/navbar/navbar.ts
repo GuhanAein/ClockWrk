@@ -12,6 +12,8 @@ import { AuthService } from '../../services/auth';
 })
 export class NavbarComponent {
 
+  isMenuOpen = false;
+
   constructor(public authService: AuthService, private router: Router) { }
 
   onLogoClick() {
@@ -20,5 +22,9 @@ export class NavbarComponent {
     } else {
       this.router.navigate(['/']);
     }
+  }
+
+  toggleMenu() {
+    this.isMenuOpen = !this.isMenuOpen;
   }
 }

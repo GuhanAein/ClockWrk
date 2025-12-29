@@ -3,17 +3,23 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HabitService, Habit, HabitStats } from '../../services/habit';
-import { AuthService } from '../../services/auth';
+import { AuthService, UserProfile } from '../../services/auth';
+import { NotificationService } from '../../services/notification';
+import { AppHeaderComponent } from '../../components/app-header/app-header';
 import confetti from 'canvas-confetti';
 
 @Component({
     selector: 'app-habits',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppHeaderComponent],
     templateUrl: './habits.html',
     styleUrls: ['./habits.css']
 })
 export class HabitsComponent implements OnInit {
+    // User info for header
+    username = 'User';
+    userAvatarUrl = '';
+    sidebarOpen = true;
     habits: Habit[] = [];
     habitEntries: Map<string, Map<string, boolean>> = new Map();
 
@@ -26,24 +32,34 @@ export class HabitsComponent implements OnInit {
     filterCategory: string = 'All';
     sortBy: 'name' | 'streak' | 'completion' = 'name';
 
+    // View state
+    activeView: 'grid' | 'table' | 'heatmap' = 'table';
+    sheetPeriod: 'day' | 'week' | 'month' = 'week';
+    currentDate: Date = new Date();
+
+    // Streak tracking
+    overallStreak = 0;
+    bestStreak = 0;
+
     // Modal states
     isAddHabitModalOpen = false;
     isEditHabitModalOpen = false;
     selectedHabit: Habit | null = null;
 
     // Form data
-    habitForm: Habit = {
+    habitForm: any = {
         name: '',
         frequency: 'daily',
         targetCount: 1,
         category: 'General',
         color: '#6366f1',
-        icon: '🎯'
+        icon: '🎯',
+        reminderTime: ''
     };
 
     // Available options
     categories = ['Health', 'Productivity', 'Learning', 'Fitness', 'Mindfulness', 'Social', 'General'];
-    icons = ['🎯', '💪', '📚', '🏃', '🧘', '💼', '🎨', '🎵', '✍️', '🌱', '💡', '⭐', '🔥', '💎', '🚀'];
+    icons = ['🎯', '💪', '📚', '🏃', '🧘', '💼', '🎨', '🎵', '✍️', '🌱', '💡', '⭐', '🔥', '💎', '🚀', '🧠', '💤', '🥗', '💧', '🎮'];
     colors = [
         '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#ef4444',
         '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
@@ -53,12 +69,13 @@ export class HabitsComponent implements OnInit {
     constructor(
         private habitService: HabitService,
         private authService: AuthService,
+        private notification: NotificationService,
         private router: Router
     ) { }
 
 
     // View State
-    viewMode: 'monthly' | 'weekly' = 'weekly'; // Default to weekly for better focus
+    viewMode: 'monthly' | 'weekly' = 'weekly';
 
     // Weekly Stats
     weeklySummary = {
@@ -73,7 +90,16 @@ export class HabitsComponent implements OnInit {
     weekDates: Date[] = [];
 
     get displayedDays(): Date[] {
-        return this.viewMode === 'weekly' ? this.weekDates : this.monthDays;
+        switch (this.sheetPeriod) {
+            case 'day':
+                return [this.currentDate];
+            case 'week':
+                return this.weekDates;
+            case 'month':
+                return this.monthDays;
+            default:
+                return this.weekDates;
+        }
     }
 
     setViewMode(mode: 'weekly' | 'monthly') {
@@ -84,12 +110,10 @@ export class HabitsComponent implements OnInit {
     get filteredHabits(): Habit[] {
         let result = [...this.habits];
 
-        // Filter
         if (this.filterCategory !== 'All') {
             result = result.filter(h => h.category === this.filterCategory);
         }
 
-        // Sort
         result.sort((a, b) => {
             if (this.sortBy === 'name') {
                 return a.name.localeCompare(b.name);
@@ -112,17 +136,115 @@ export class HabitsComponent implements OnInit {
             return;
         }
 
+        // Load user profile for header
+        this.authService.getProfile().subscribe({
+            next: (user: UserProfile) => {
+                this.username = user.name || 'User';
+                this.userAvatarUrl = user.profilePictureUrl || '';
+            },
+            error: () => {}
+        });
+
         this.generateMonthDays();
         this.generatecurrentWeekDates();
         this.loadHabits();
-        // Load entries after week dates are generated
         this.loadHabitEntries();
     }
 
+    openSettingsModal() {
+        // Navigate to dashboard settings - could be improved with a dedicated settings page
+        this.router.navigate(['/app'], { queryParams: { openSettings: true } });
+    }
+
+    toggleSidebar() {
+        this.sidebarOpen = !this.sidebarOpen;
+    }
+
+    setSheetPeriod(period: 'day' | 'week' | 'month') {
+        this.sheetPeriod = period;
+        this.currentDate = new Date();
+        this.generatecurrentWeekDates();
+        this.generateMonthDays();
+        this.loadHabitEntries();
+    }
+
+    navigatePrevious() {
+        switch (this.sheetPeriod) {
+            case 'day':
+                this.currentDate = new Date(this.currentDate);
+                this.currentDate.setDate(this.currentDate.getDate() - 1);
+                break;
+            case 'week':
+                this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
+                this.generateWeekDatesFromStart();
+                break;
+            case 'month':
+                this.previousMonth();
+                return; // previousMonth already loads entries
+        }
+        this.loadHabitEntries();
+    }
+
+    navigateNext() {
+        switch (this.sheetPeriod) {
+            case 'day':
+                this.currentDate = new Date(this.currentDate);
+                this.currentDate.setDate(this.currentDate.getDate() + 1);
+                break;
+            case 'week':
+                this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
+                this.generateWeekDatesFromStart();
+                break;
+            case 'month':
+                this.nextMonth();
+                return; // nextMonth already loads entries
+        }
+        this.loadHabitEntries();
+    }
+
+    goToToday() {
+        this.currentDate = new Date();
+        this.currentMonth = new Date();
+        this.generatecurrentWeekDates();
+        this.generateMonthDays();
+        this.loadHabitEntries();
+    }
+
+    generateWeekDatesFromStart() {
+        this.weekDates = [];
+        for (let i = 0; i < 7; i++) {
+            const next = new Date(this.currentWeekStart);
+            next.setDate(this.currentWeekStart.getDate() + i);
+            this.weekDates.push(next);
+        }
+    }
+
+    getDateRangeLabel(): string {
+        switch (this.sheetPeriod) {
+            case 'day':
+                return this.currentDate.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            case 'week':
+                const weekStart = this.weekDates[0];
+                const weekEnd = this.weekDates[6];
+                if (weekStart.getMonth() === weekEnd.getMonth()) {
+                    return `${weekStart.toLocaleDateString('en-US', { month: 'short' })} ${weekStart.getDate()} - ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+                }
+                return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            case 'month':
+                return this.getMonthYear();
+            default:
+                return '';
+        }
+    }
+
     generatecurrentWeekDates() {
-        const curr = new Date(); // get current date
-        const first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
-        // Note: This assumes Sunday is first day (0). If Monday is first, logic tweaks needed.
+        const curr = new Date();
+        const first = curr.getDate() - curr.getDay();
 
         this.currentWeekStart = new Date(curr.setDate(first));
         this.weekDates = [];
@@ -138,7 +260,6 @@ export class HabitsComponent implements OnInit {
         let totalCompleted = 0;
         let perfectDaysCount = 0;
 
-        // Calculate Grade
         this.weekDates.forEach(date => {
             if (this.isFutureDate(date)) return;
 
@@ -164,7 +285,6 @@ export class HabitsComponent implements OnInit {
             }
         });
 
-        // Weekly Habits Logic
         this.habits.filter(h => h.frequency === 'weekly').forEach(habit => {
             totalOpportunities += habit.targetCount;
             let doneThisWeek = 0;
@@ -199,10 +319,10 @@ export class HabitsComponent implements OnInit {
             next: (habits) => {
                 this.habits = habits;
                 this.loadHabitEntries();
-                // Recalculate summary after loading
                 this.calculateWeeklySummary();
+                this.calculateOverallStreak();
             },
-            error: (err) => console.error('Failed to load habits', err)
+            error: () => this.notification.error('Failed to load habits')
         });
     }
 
@@ -210,16 +330,22 @@ export class HabitsComponent implements OnInit {
         let startDate: Date;
         let endDate: Date;
 
-        if (this.viewMode === 'weekly') {
-            // Load entries for the current week
+        switch (this.sheetPeriod) {
+            case 'day':
+                startDate = new Date(this.currentDate);
+                endDate = new Date(this.currentDate);
+                break;
+            case 'week':
             startDate = new Date(this.weekDates[0]);
             endDate = new Date(this.weekDates[this.weekDates.length - 1]);
-        } else {
-            // Load entries for the current month
+                break;
+            case 'month':
+            default:
             const year = this.currentMonth.getFullYear();
             const month = this.currentMonth.getMonth();
             startDate = new Date(year, month, 1);
             endDate = new Date(year, month + 1, 0);
+                break;
         }
 
         const startStr = this.formatDate(startDate);
@@ -229,7 +355,6 @@ export class HabitsComponent implements OnInit {
             next: (entries) => {
                 this.habitEntries.clear();
 
-                // entries is a map of habitId -> map of date -> entry
                 for (const habitId in entries) {
                     const habitMap = new Map<string, boolean>();
                     const dateEntries = entries[habitId];
@@ -241,12 +366,9 @@ export class HabitsComponent implements OnInit {
                     this.habitEntries.set(habitId, habitMap);
                 }
 
-                // Recalculate weekly summary after loading entries
-                if (this.viewMode === 'weekly') {
                     this.calculateWeeklySummary();
-                }
             },
-            error: (err) => console.error('Failed to load habit entries', err)
+            error: () => this.notification.error('Failed to load habit entries')
         });
     }
 
@@ -316,7 +438,6 @@ export class HabitsComponent implements OnInit {
 
         this.habitService.toggleHabitEntry(habit.id, dateStr).subscribe({
             next: () => {
-                // Update local state
                 let habitMap = this.habitEntries.get(habit.id!);
                 if (!habitMap) {
                     habitMap = new Map();
@@ -324,26 +445,18 @@ export class HabitsComponent implements OnInit {
                 }
 
                 habitMap.set(dateStr, !isCurrentlyCompleted);
-
-                // Reload habits to update backend stats
                 this.loadHabits();
 
-                // Trigger confetti if completing
                 if (!isCurrentlyCompleted && event) {
                     this.triggerConfetti(event);
                 }
             },
-            error: (err) => console.error('Failed to toggle habit', err)
+            error: () => this.notification.error('Failed to update habit')
         });
     }
 
     triggerConfetti(event: MouseEvent) {
-        // Calculate relative position?
-        // Actually, just standard confetti blast from center or around cursor
-        // Let's do a simple blast from the click position
-
         const rect = (event.target as HTMLElement).getBoundingClientRect();
-        // Normalized coordinates (0-1)
         const x = (rect.left + rect.width / 2) / window.innerWidth;
         const y = (rect.top + rect.height / 2) / window.innerHeight;
 
@@ -357,7 +470,6 @@ export class HabitsComponent implements OnInit {
         });
     }
 
-    // Stats calculations mirroring the sheet
     getMonthlyResult(habit: Habit): string {
         if (!habit.id) return '0/' + this.monthDays.length;
 
@@ -429,7 +541,7 @@ export class HabitsComponent implements OnInit {
 
     saveHabit() {
         if (!this.habitForm.name.trim()) {
-            alert('Please enter a habit name');
+            this.notification.warning('Please enter a habit name');
             return;
         }
 
@@ -438,11 +550,9 @@ export class HabitsComponent implements OnInit {
                 this.habits.push(habit);
                 this.closeAddHabitModal();
                 this.loadHabits();
+                this.notification.success(`Habit "${habit.name}" created!`);
             },
-            error: (err) => {
-                console.error('Failed to create habit', err);
-                alert('Failed to create habit');
-            }
+            error: () => this.notification.error('Failed to create habit')
         });
     }
 
@@ -456,11 +566,9 @@ export class HabitsComponent implements OnInit {
                     this.habits[index] = updated;
                 }
                 this.closeEditHabitModal();
+                this.notification.success('Habit updated');
             },
-            error: (err) => {
-                console.error('Failed to update habit', err);
-                alert('Failed to update habit');
-            }
+            error: () => this.notification.error('Failed to update habit')
         });
     }
 
@@ -472,11 +580,9 @@ export class HabitsComponent implements OnInit {
             next: () => {
                 this.habits = this.habits.filter(h => h.id !== habit.id);
                 this.habitEntries.delete(habit.id!);
+                this.notification.success('Habit deleted');
             },
-            error: (err) => {
-                console.error('Failed to delete habit', err);
-                alert('Failed to delete habit');
-            }
+            error: () => this.notification.error('Failed to delete habit')
         });
     }
 
@@ -486,5 +592,98 @@ export class HabitsComponent implements OnInit {
 
     logout() {
         this.authService.logout();
+        this.notification.info('You have been logged out');
+    }
+
+    // ========== Today Panel Methods ==========
+    
+    getTodayName(): string {
+        return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    }
+
+    getTodayDate(): string {
+        return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    getTodayHabits(): Habit[] {
+        return this.habits.filter(h => !h.archived && h.frequency === 'daily');
+    }
+
+    getTodayCompleted(): number {
+        const today = new Date();
+        return this.getTodayHabits().filter(h => this.isHabitCompleted(h.id!, today)).length;
+    }
+
+    getTodayTotal(): number {
+        return this.getTodayHabits().length;
+    }
+
+    getTodayProgressOffset(): number {
+        const total = this.getTodayTotal();
+        const radius = 60;
+        const circumference = 2 * Math.PI * radius;
+        if (total === 0) return circumference;
+        
+        const completed = this.getTodayCompleted();
+        const progress = completed / total;
+        return circumference - (progress * circumference);
+    }
+
+    isHabitCompletedToday(habit: Habit): boolean {
+        return this.isHabitCompleted(habit.id!, new Date());
+    }
+
+    toggleHabitToday(habit: Habit, event: MouseEvent) {
+        this.toggleHabit(habit, new Date(), event);
+    }
+
+    getMotivationalMessage(): string {
+        const completed = this.getTodayCompleted();
+        const total = this.getTodayTotal();
+        
+        if (total === 0) return "Add some habits to get started!";
+        if (completed === 0) return "Start your day strong! 💪";
+        if (completed < total / 2) return "Keep going, you're doing great!";
+        if (completed < total) return "Almost there! 🎯";
+        return "Perfect day! You're amazing! 🌟";
+    }
+
+    calculateOverallStreak() {
+        // Calculate how many consecutive days ALL daily habits were completed
+        let streak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const dailyHabits = this.habits.filter(h => h.frequency === 'daily' && !h.archived);
+        if (dailyHabits.length === 0) {
+            this.overallStreak = 0;
+            return;
+        }
+
+        for (let i = 0; i < 365; i++) {
+            const checkDate = new Date(today);
+            checkDate.setDate(today.getDate() - i);
+            
+            // Skip today if not all habits are done yet
+            if (i === 0) {
+                const allDoneToday = dailyHabits.every(h => this.isHabitCompleted(h.id!, checkDate));
+                if (!allDoneToday) continue;
+            }
+            
+            const allCompleted = dailyHabits.every(h => this.isHabitCompleted(h.id!, checkDate));
+            if (allCompleted) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        
+        this.overallStreak = streak;
+        
+        // Calculate best streak from individual habits
+        this.bestStreak = Math.max(
+            ...this.habits.map(h => h.stats?.longestStreak || h.stats?.currentStreak || 0),
+            this.overallStreak
+        );
     }
 }

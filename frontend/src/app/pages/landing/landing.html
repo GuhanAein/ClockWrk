@@ -13,8 +13,14 @@
                 work without the clutter.
             </p>
             <div class="cta-group">
-                <a routerLink="/signup" class="btn btn-primary">Get Started Free</a>
-                <a href="#features" class="btn btn-outline">Explore Features</a>
+                <ng-container *ngIf="!authService.isAuthenticated()">
+                    <a routerLink="/signup" class="btn btn-primary">Get Started Free</a>
+                    <a href="#features" class="btn btn-outline">Explore Features</a>
+                </ng-container>
+                <ng-container *ngIf="authService.isAuthenticated()">
+                    <a routerLink="/app" class="btn btn-primary">Go to Dashboard</a>
+                    <a href="#features" class="btn btn-outline">Explore Features</a>
+                </ng-container>
             </div>
         </div>
 
@@ -416,12 +422,21 @@
 <section class="cta-section">
     <div class="container">
         <div class="cta-content">
-            <h2 class="cta-title">Ready to get organized?</h2>
-            <p class="cta-subtitle">Start managing your tasks with a clean, focused interface</p>
-            <div class="cta-buttons">
-                <a routerLink="/signup" class="btn btn-primary btn-large">Get Started</a>
-                <a routerLink="/login" class="btn btn-outline btn-large">Sign In</a>
-            </div>
+            <ng-container *ngIf="!authService.isAuthenticated()">
+                <h2 class="cta-title">Ready to get organized?</h2>
+                <p class="cta-subtitle">Start managing your tasks with a clean, focused interface</p>
+                <div class="cta-buttons">
+                    <a routerLink="/signup" class="btn btn-primary btn-large">Get Started</a>
+                    <a routerLink="/login" class="btn btn-outline btn-large">Sign In</a>
+                </div>
+            </ng-container>
+            <ng-container *ngIf="authService.isAuthenticated()">
+                <h2 class="cta-title">Welcome back!</h2>
+                <p class="cta-subtitle">Continue managing your tasks and stay productive</p>
+                <div class="cta-buttons">
+                    <a routerLink="/app" class="btn btn-primary btn-large">Go to Dashboard</a>
+                </div>
+            </ng-container>
         </div>
     </div>
 </section>

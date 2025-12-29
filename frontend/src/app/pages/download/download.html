@@ -1,6 +1,6 @@
 <app-navbar></app-navbar>
 
-<div class="download-container">
+<div class="download-container fade-in">
     <div class="download-header">
         <h1>Get ClockWrk on all your devices</h1>
         <p>Seamlessly sync your tasks, habits, and focus sessions across every platform.</p>
@@ -15,8 +15,7 @@
             </svg>
             <h2>Windows</h2>
             <p class="version-text">Windows 10/11 • 64-bit</p>
-            <a href="javascript:void(0)"
-                onclick="alert('ClockWrk Desktop App build is coming soon! This is a demo link.')" class="download-btn"
+            <a href="javascript:void(0)" (click)="handleDownload('Desktop App')" class="download-btn"
                 style="text-decoration: none;">
                 <span>Download for Windows</span>
                 <span class="btn-subtext">.exe installer</span>
@@ -31,8 +30,7 @@
             </svg>
             <h2>macOS</h2>
             <p class="version-text">macOS 11+ • Intel & Apple Silicon</p>
-            <a href="javascript:void(0)"
-                onclick="alert('ClockWrk Desktop App build is coming soon! This is a demo link.')" class="download-btn"
+            <a href="javascript:void(0)" (click)="handleDownload('Desktop App')" class="download-btn"
                 style="text-decoration: none;">
                 <span>Download for Mac</span>
                 <span class="btn-subtext">.dmg installer</span>
@@ -47,8 +45,7 @@
             </svg>
             <h2>Android</h2>
             <p class="version-text">Android 10+ • APK</p>
-            <a href="javascript:void(0)"
-                onclick="alert('ClockWrk Mobile App build is coming soon! This is a demo link.')" class="download-btn"
+            <a href="javascript:void(0)" (click)="handleDownload('Mobile App')" class="download-btn"
                 style="text-decoration: none;">
                 <span>Download for Android</span>
                 <span class="btn-subtext">.apk file</span>

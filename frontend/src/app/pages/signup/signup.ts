@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth';
 import { OAuthService } from '../../services/oauth';
+import { NotificationService } from '../../services/notification';
 import { NavbarComponent } from '../../components/navbar/navbar';
 
 @Component({
@@ -25,12 +26,13 @@ export class SignupComponent {
   isOtpSent = false;
   emailForOtp = '';
   showPassword = false;
-  isVerifyingEmail = false; // New state for signup email verification
+  isVerifyingEmail = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private oauthService: OAuthService,
+    private notification: NotificationService,
     private router: Router
   ) {
     this.signupForm = this.fb.group({
@@ -58,14 +60,21 @@ export class SignupComponent {
 
     this.authService.register({ name, email, password }).subscribe({
       next: (res) => {
-        // Registration successful, now show OTP verification
-        this.isVerifyingEmail = true;
-        this.emailForOtp = email;
         this.loading = false;
-        this.errorMessage = '';
+        
+        if (res.requiresVerification || !res.accessToken) {
+          // Registration successful, now show OTP verification
+          this.isVerifyingEmail = true;
+          this.emailForOtp = email;
+          this.notification.success('Account created! Please verify your email.', 'Check your inbox');
+        } else {
+          this.notification.success('Welcome to ClockWrk!', 'Account Created');
+          this.router.navigate(['/app']);
+        }
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
+        this.notification.error(this.errorMessage);
         this.loading = false;
       }
     });
@@ -73,32 +82,38 @@ export class SignupComponent {
 
   verifySignupEmail() {
     const otp = this.otpForm.get('otp')?.value;
-    if (!otp) return;
+    if (!otp) {
+      this.notification.warning('Please enter the verification code');
+      return;
+    }
 
     this.loading = true;
     this.authService.verifySignupEmail(this.emailForOtp, otp).subscribe({
       next: (res) => {
-        this.router.navigate(['/app']);
         this.loading = false;
+        this.notification.success('Email verified! Welcome to ClockWrk!', 'Success');
+        this.router.navigate(['/app']);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Invalid OTP';
+        this.errorMessage = err.error?.message || 'Invalid verification code';
+        this.notification.error(this.errorMessage);
         this.loading = false;
       }
     });
   }
 
-  // OTP Logic (Same as login)
+  // OTP Logic (passwordless signup)
   toggleOtpMode() {
     this.showOtpInput = !this.showOtpInput;
     this.errorMessage = '';
     this.isOtpSent = false;
+    this.isVerifyingEmail = false;
   }
 
   sendOtp() {
     const email = this.otpForm.get('email')?.value;
     if (!email) {
-      this.errorMessage = 'Please enter your email first';
+      this.notification.warning('Please enter your email first');
       return;
     }
 
@@ -109,10 +124,11 @@ export class SignupComponent {
         this.emailForOtp = email;
         this.loading = false;
         this.errorMessage = '';
-        alert('OTP sent to your email!');
+        this.notification.success('OTP sent to your email!', 'Check your inbox');
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to send OTP';
+        this.notification.error(this.errorMessage);
         this.loading = false;
       }
     });
@@ -120,21 +136,25 @@ export class SignupComponent {
 
   verifyOtp() {
     const otp = this.otpForm.get('otp')?.value;
-    if (!otp) return;
+    if (!otp) {
+      this.notification.warning('Please enter the OTP');
+      return;
+    }
 
     this.loading = true;
     this.authService.verifyOtp(this.emailForOtp, otp).subscribe({
       next: (res) => {
-        this.router.navigate(['/app']);
         this.loading = false;
+        this.notification.success('Welcome to ClockWrk!', 'Login Successful');
+        this.router.navigate(['/app']);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Invalid OTP';
+        this.notification.error(this.errorMessage);
         this.loading = false;
       }
     });
   }
-
 
   signupWithGoogle() {
     this.oauthService.loginWithGoogle();

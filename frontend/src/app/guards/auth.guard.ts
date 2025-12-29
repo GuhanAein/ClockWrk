@@ -6,10 +6,16 @@ export const authGuard: CanActivateFn = (route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (authService.isAuthenticated()) {
+    // Simple check: if we have a token, allow access
+    // The interceptor will handle token refresh if needed
+    const token = authService.getToken();
+    
+    if (token) {
+        // We have a token - allow access
+        // If it's expired, the interceptor will refresh it or handle the error
         return true;
     }
 
-    // Redirect to login page with return url
+    // No token at all - redirect to login
     return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };

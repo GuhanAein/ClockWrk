@@ -4,6 +4,7 @@ import { LoginComponent } from './pages/login/login';
 import { SignupComponent } from './pages/signup/signup';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { HabitsComponent } from './pages/habits/habits';
+import { CalendarComponent } from './pages/calendar/calendar';
 import { OAuthRedirectComponent } from './pages/oauth-redirect/oauth-redirect';
 import { authGuard } from './guards/auth.guard';
 
@@ -15,6 +16,7 @@ export const routes: Routes = [
     { path: 'signup', component: SignupComponent, canActivate: [guestGuard] },
     { path: 'app', component: DashboardComponent, canActivate: [authGuard] }, 
     { path: 'habits', component: HabitsComponent, canActivate: [authGuard] },
+    { path: 'calendar', component: CalendarComponent, canActivate: [authGuard] },
     { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy').then(m => m.PrivacyComponent) },
     { path: 'pricing', loadComponent: () => import('./pages/pricing/pricing').then(m => m.PricingComponent) },
     { path: 'download', loadComponent: () => import('./pages/download/download').then(m => m.DownloadComponent) },

@@ -829,7 +829,7 @@
     opacity: 0;
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
     .hero .container {
         flex-direction: column;
@@ -838,13 +838,11 @@
 
     .hero-content {
         max-width: 100%;
+        margin-bottom: 3rem;
     }
 
-    .hero-title {
-        font-size: 3rem;
-    }
-
-    .cta-group {
+    .hero-visual {
+        width: 100%;
         justify-content: center;
     }
 
@@ -852,6 +850,26 @@
     .feature-block.reverse {
         flex-direction: column;
         gap: 3rem;
+        text-align: center;
+    }
+
+    .feature-content {
+        order: 1;
+    }
+
+    .feature-image {
+        order: 2;
+        width: 100%;
+    }
+
+    .feature-icon {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .feature-list li {
+        justify-content: center;
+        display: flex;
     }
 
     .benefits-grid {
@@ -861,6 +879,16 @@
     .footer-content {
         flex-direction: column;
         gap: 3rem;
+        text-align: center;
+    }
+
+    .footer-brand {
+        align-items: center;
+        margin: 0 auto;
+    }
+
+    .footer-brand .logo {
+        justify-content: center;
     }
 }
 
@@ -873,28 +901,27 @@
         font-size: 2.5rem;
     }
 
-    .hero-subtitle {
-        font-size: 1.1rem;
+    .mock-window-body {
+        height: 280px;
+        /* Smaller height for mobile */
     }
 
-    .section-title {
-        font-size: 2rem;
+    .mock-sidebar {
+        width: 50px;
+        padding: 1rem 0.5rem;
     }
 
-    .section-subtitle {
-        font-size: 1.1rem;
+    /* Hide sidebar text on mobile to save space */
+    .mock-nav-item span {
+        display: none;
     }
 
-    .feature-title {
-        font-size: 1.5rem;
+    .mock-nav-item {
+        justify-content: center;
     }
 
     .benefits-grid {
         grid-template-columns: 1fr;
-    }
-
-    .cta-title {
-        font-size: 2rem;
     }
 
     .cta-buttons {
@@ -904,5 +931,9 @@
     .footer-links {
         flex-direction: column;
         gap: 2rem;
+    }
+
+    .app-preview-wrapper {
+        max-width: 100%;
     }
 }

@@ -11,7 +11,7 @@
                 <span class="beta-tag">beta</span>
             </div>
         </div>
-        <div class="nav-links">
+        <div class="nav-links desktop-menu">
             <a routerLink="/features" class="nav-link">Features</a>
             <a routerLink="/pricing" class="nav-link">Pricing</a>
             <a routerLink="/download" class="nav-link">Download</a>
@@ -25,5 +25,30 @@
                 <a routerLink="/app" class="btn btn-primary">Go to App</a>
             </ng-container>
         </div>
+
+        <!-- Hamburger Button -->
+        <button class="hamburger-btn" (click)="toggleMenu()" [class.active]="isMenuOpen">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" [class.open]="isMenuOpen">
+        <a routerLink="/features" class="mobile-link" (click)="toggleMenu()">Features</a>
+        <a routerLink="/pricing" class="mobile-link" (click)="toggleMenu()">Pricing</a>
+        <a routerLink="/download" class="mobile-link" (click)="toggleMenu()">Download</a>
+
+        <div class="mobile-divider"></div>
+
+        <ng-container *ngIf="!authService.isAuthenticated()">
+            <a routerLink="/login" class="mobile-link" (click)="toggleMenu()">Sign In</a>
+            <a routerLink="/signup" class="btn btn-primary mobile-btn" (click)="toggleMenu()">Start for Free</a>
+        </ng-container>
+
+        <ng-container *ngIf="authService.isAuthenticated()">
+            <a routerLink="/app" class="btn btn-primary mobile-btn" (click)="toggleMenu()">Go to App</a>
+        </ng-container>
     </div>
 </nav>

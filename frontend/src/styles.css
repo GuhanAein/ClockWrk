@@ -205,3 +205,30 @@ a:hover {
 .text-muted {
     color: var(--text-muted);
 }
+
+/* Mobile Responsive Global Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    h1 {
+        font-size: 2.5rem !important;
+    }
+
+    h2 {
+        font-size: 2rem !important;
+    }
+
+    .flex-col-mobile {
+        flex-direction: column !important;
+    }
+
+    .w-full-mobile {
+        width: 100% !important;
+    }
+
+    .hidden-mobile {
+        display: none !important;
+    }
+}

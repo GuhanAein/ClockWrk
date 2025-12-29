@@ -1,201 +1,315 @@
-<div class="habits-container">
-    <!-- Header -->
-    <header class="habits-header">
-        <div class="header-left">
-            <button class="back-btn" (click)="goToDashboard()">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-                Back to Dashboard
-            </button>
-            <h1 class="page-title">
-                <span class="title-icon">📊</span>
-                Habit Sheet
-            </h1>
-        </div>
+<div class="app-container">
+    <!-- Shared App Header -->
+    <app-header
+        [username]="username"
+        [userAvatarUrl]="userAvatarUrl"
+        [showSidebarToggle]="!sidebarOpen"
+        (toggleSidebar)="toggleSidebar()"
+        (openSettings)="openSettingsModal()">
+    </app-header>
 
-        <div class="header-controls">
-            <!-- Filter -->
-            <div class="control-group">
-                <label>Filter:</label>
-                <select [(ngModel)]="filterCategory" class="control-select">
-                    <option value="All">All Categories</option>
-                    <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-                </select>
-            </div>
-
-            <!-- Sort -->
-            <div class="control-group">
-                <label>Sort:</label>
-                <select [(ngModel)]="sortBy" class="control-select">
-                    <option value="name">Name</option>
-                    <option value="streak">Streak</option>
-                    <option value="completion">Success %</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="header-right">
-            <div class="month-nav">
-                <button class="nav-btn" (click)="previousMonth()">←</button>
-                <span class="month-label">{{ getMonthYear() }}</span>
-                <button class="nav-btn" (click)="nextMonth()">→</button>
-            </div>
-            <button class="add-habit-btn" (click)="openAddHabitModal()">
-                + Add Habit
-            </button>
-            <button class="logout-btn" (click)="logout()">Logout</button>
-        </div>
-    </header>
-
-    <!-- Summary Dashboard -->
-    <div class="summary-dashboard" *ngIf="viewMode === 'weekly'">
-        <div class="summary-card grade-card">
-            <div class="card-title">Weekly Grade</div>
-            <div class="grade-circle" [attr.data-grade]="weeklySummary.gradeLetter">
-                {{ weeklySummary.gradeLetter }}
-                <span class="grade-percent">{{ weeklySummary.grade }}%</span>
-            </div>
-        </div>
-        <div class="summary-card">
-            <div class="card-title">Completed</div>
-            <div class="card-value">{{ weeklySummary.completedCount }} <span class="card-sub">/ {{
-                    weeklySummary.totalDue }}</span></div>
-        </div>
-        <div class="summary-card">
-            <div class="card-title">Perfect Days</div>
-            <div class="card-value">{{ weeklySummary.perfectDays }} <span class="card-sub">days</span></div>
-        </div>
-    </div>
-
-    <!-- View Toggle -->
-    <div class="view-toggle-bar">
-        <div class="toggle-group">
-            <button class="toggle-btn" [class.active]="viewMode === 'weekly'" (click)="setViewMode('weekly')">
-                Weekly Focus
-            </button>
-            <button class="toggle-btn" [class.active]="viewMode === 'monthly'" (click)="setViewMode('monthly')">
-                Monthly Sheet
-            </button>
-        </div>
-    </div>
-
-    <!-- Sheet View (Scrollable Table) -->
-    <div class="sheet-viewport">
-        <div class="sheet-table">
-            <!-- Header Row -->
-            <div class="sheet-row header-row">
-                <div class="sheet-cell sticky-col name-col">Habit</div>
-                <div class="sheet-cell info-col">Goal</div>
-                <div class="sheet-cell info-col">Freq</div>
-
-                <!-- Day Columns -->
-                <div class="sheet-cell day-col" *ngFor="let day of displayedDays" [class.today-header]="isToday(day)">
-                    <div class="day-number">{{ day.getDate() }}</div>
-                    <div class="day-name">{{ weekDays[day.getDay()] }}</div>
+    <div class="dashboard-body">
+        <!-- Left Sidebar -->
+        <div class="sidebar" *ngIf="sidebarOpen">
+            <div class="nav-group">
+                <div class="nav-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Views</span>
+                    <button class="sidebar-toggle-btn" (click)="toggleSidebar()" title="Close Sidebar" style="padding: 0.25rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
-
-                <!-- Stats Columns -->
-                <div class="sheet-cell stat-col">Result</div>
-                <div class="sheet-cell stat-col">Streak</div>
-                <div class="sheet-cell stat-col success-col">Success %</div>
+                <div class="nav-item" [class.active]="activeView === 'table'" (click)="activeView = 'table'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Sheet View</span>
+                </div>
+                <div class="nav-item" [class.active]="activeView === 'grid'" (click)="activeView = 'grid'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Cards</span>
+                </div>
             </div>
 
-            <!-- Habit Rows -->
-            <div class="sheet-row habit-row" *ngFor="let habit of filteredHabits">
-                <div class="sheet-cell sticky-col name-cell" [style.border-left-color]="habit.color">
-                    <span class="habit-icon">{{ habit.icon }}</span>
-                    <div class="habit-details">
-                        <span class="habit-name">{{ habit.name }}</span>
-                        <div class="habit-meta">
-                            <span class="habit-category-badge" [style.background-color]="habit.color + '20'"
-                                [style.color]="habit.color">
-                                {{ habit.category }}
-                            </span>
-                            <span class="habit-freq-badge" *ngIf="habit.frequency === 'weekly'">Weekly</span>
+            <div class="nav-group">
+                <div class="nav-header">Filter</div>
+                <div class="nav-item" [class.active]="filterCategory === 'All'" (click)="filterCategory = 'All'">
+                    <span style="width:8px; height:8px; background:#617FDE; border-radius:50%; margin-right:5px;"></span>
+                    <span>All Habits</span>
+                </div>
+                <div class="nav-item" *ngFor="let cat of categories" 
+                    [class.active]="filterCategory === cat" 
+                    (click)="filterCategory = cat">
+                    <span style="width:8px; height:8px; background:#aaa; border-radius:50%; margin-right:5px;"></span>
+                    <span>{{ cat }}</span>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div style="flex:1"></div>
+            <div class="stats-summary">
+                <div class="stat-row">
+                    <span class="stat-label">Today</span>
+                    <span class="stat-value">{{ getTodayCompleted() }}/{{ getTodayTotal() }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Current Streak</span>
+                    <span class="stat-value">{{ overallStreak }} days</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Weekly Grade</span>
+                    <span class="stat-value">{{ weeklySummary.gradeLetter }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Open Sidebar Button -->
+            <button class="sidebar-open-btn" *ngIf="!sidebarOpen" (click)="toggleSidebar()" title="Open Sidebar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="list-header">
+                <div class="list-title">
+                    Habit Tracker
+                    <span class="count-badge" *ngIf="habits.length > 0">{{ habits.length }}</span>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <!-- Time Period Toggle (Sheet View Only) -->
+                    <div class="period-toggle" *ngIf="activeView === 'table'">
+                        <button class="period-btn" [class.active]="sheetPeriod === 'day'" (click)="setSheetPeriod('day')">Day</button>
+                        <button class="period-btn" [class.active]="sheetPeriod === 'week'" (click)="setSheetPeriod('week')">Week</button>
+                        <button class="period-btn" [class.active]="sheetPeriod === 'month'" (click)="setSheetPeriod('month')">Month</button>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <div class="month-nav">
+                        <button class="nav-btn" (click)="navigatePrevious()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <span class="month-label">{{ getDateRangeLabel() }}</span>
+                        <button class="nav-btn" (click)="navigateNext()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                        <button class="nav-btn today-btn" (click)="goToToday()" title="Go to today">
+                            Today
+                        </button>
+                    </div>
+                    <button class="btn-primary" (click)="openAddHabitModal()">+ Add Habit</button>
+                </div>
+            </div>
+
+            <!-- Sheet View -->
+            <div class="habit-sheet" *ngIf="activeView === 'table'">
+                <div class="sheet-table">
+                    <!-- Header Row -->
+                    <div class="sheet-row header-row">
+                        <div class="sheet-cell name-col">Habit</div>
+                        <div class="sheet-cell day-col" *ngFor="let day of displayedDays" [class.today-header]="isToday(day)">
+                            <div class="day-num">{{ day.getDate() }}</div>
+                            <div class="day-name">{{ weekDays[day.getDay()] }}</div>
+                        </div>
+                        <div class="sheet-cell stat-col">Streak</div>
+                        <div class="sheet-cell stat-col">Rate</div>
+                    </div>
+
+                    <!-- Habit Rows -->
+                    <div class="sheet-row habit-row" *ngFor="let habit of filteredHabits">
+                        <div class="sheet-cell name-col name-cell" [style.border-left-color]="habit.color">
+                            <span class="habit-icon">{{ habit.icon }}</span>
+                            <div class="habit-info">
+                                <span class="habit-name">{{ habit.name }}</span>
+                                <span class="habit-category">{{ habit.category }}</span>
+                            </div>
+                            <button class="edit-btn" (click)="openEditHabitModal(habit)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Day Checkboxes -->
+                        <div class="sheet-cell day-cell" *ngFor="let day of displayedDays"
+                            [class.weekend]="day.getDay() === 0 || day.getDay() === 6"
+                            [class.today]="isToday(day)"
+                            [class.future]="isFutureDate(day)"
+                            (click)="toggleHabit(habit, day, $event)">
+                            <div class="habit-checkbox" 
+                                [class.checked]="isHabitCompleted(habit.id!, day)"
+                                [style.background-color]="isHabitCompleted(habit.id!, day) ? habit.color : ''"
+                                [style.border-color]="isHabitCompleted(habit.id!, day) ? habit.color : ''">
+                            </div>
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="sheet-cell stat-col">
+                            <span class="streak-badge" *ngIf="habit.stats?.currentStreak">🔥 {{ habit.stats?.currentStreak }}</span>
+                            <span *ngIf="!habit.stats?.currentStreak">0</span>
+                        </div>
+                        <div class="sheet-cell stat-col">{{ getMonthlySuccessPercentage(habit) }}%</div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" *ngIf="filteredHabits.length === 0">
+                        <svg class="empty-state-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <p>No habits yet. Create your first habit to start tracking!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards View -->
+            <div class="habit-cards" *ngIf="activeView === 'grid'">
+                <div class="habit-card" *ngFor="let habit of filteredHabits" 
+                    [style.border-left-color]="habit.color">
+                    <div class="card-header">
+                        <span class="habit-icon">{{ habit.icon }}</span>
+                        <div class="card-info">
+                            <h3>{{ habit.name }}</h3>
+                            <span class="category-tag" [style.color]="habit.color">{{ habit.category }}</span>
+                        </div>
+                        <button class="edit-btn" (click)="openEditHabitModal(habit)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="19" cy="12" r="1"></circle>
+                                <circle cx="5" cy="12" r="1"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <p class="card-goal" *ngIf="habit.description">{{ habit.description }}</p>
+
+                    <div class="week-row">
+                        <div class="week-day" *ngFor="let day of weekDates"
+                            [class.future]="isFutureDate(day)"
+                            (click)="toggleHabit(habit, day, $event)">
+                            <span class="week-day-label" [class.today]="isToday(day)">{{ weekDays[day.getDay()] }}</span>
+                            <div class="habit-checkbox small"
+                                [class.checked]="isHabitCompleted(habit.id!, day)"
+                                [style.background-color]="isHabitCompleted(habit.id!, day) ? habit.color : ''"
+                                [style.border-color]="isHabitCompleted(habit.id!, day) ? habit.color : ''">
+                            </div>
                         </div>
                     </div>
-                    <button class="edit-btn" (click)="openEditHabitModal(habit)">✎</button>
-                </div>
-                <div class="sheet-cell info-cell" title="{{ habit.description }}">{{ habit.description || '-' }}</div>
-                <div class="sheet-cell info-cell">{{ habit.frequency === 'daily' ? 'Daily' : habit.targetCount + '/wk'
-                    }}</div>
 
-                <!-- Day Checkboxes -->
-                <div class="sheet-cell day-cell" *ngFor="let day of displayedDays"
-                    [class.weekend]="day.getDay() === 0 || day.getDay() === 6" [class.today]="isToday(day)"
-                    [class.future]="isFutureDate(day)" (click)="toggleHabit(habit, day, $event)">
-                    <div class="checkbox" [class.checked]="isHabitCompleted(habit.id!, day)"
-                        [style.background-color]="isHabitCompleted(habit.id!, day) ? habit.color : 'transparent'"
-                        [style.border-color]="isHabitCompleted(habit.id!, day) ? habit.color : '#e2e8f0'">
-                        <span *ngIf="isHabitCompleted(habit.id!, day)">✓</span>
+                    <div class="card-footer">
+                        <span class="streak" *ngIf="habit.stats?.currentStreak">🔥 {{ habit.stats?.currentStreak }} day streak</span>
+                        <span class="rate">{{ getMonthlySuccessPercentage(habit) }}%</span>
                     </div>
                 </div>
 
-                <!-- Stats Values -->
-                <div class="sheet-cell stat-cell">{{ getMonthlyResult(habit) }}</div>
-                <div class="sheet-cell stat-cell highlight-stat">{{ habit.stats?.currentStreak || 0 }}</div>
-                <div class="sheet-cell stat-cell success-cell">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" [style.width.%]="getMonthlySuccessPercentage(habit)"
-                            [style.background-color]="habit.color"></div>
-                    </div>
-                    <span class="progress-text">{{ getMonthlySuccessPercentage(habit) }}%</span>
+                <!-- Add Habit Card -->
+                <div class="habit-card add-card" (click)="openAddHabitModal()">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add New Habit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Progress Panel -->
+        <div class="detail-panel" *ngIf="activeView === 'table'">
+            <h3 class="panel-title">Today's Progress</h3>
+            
+            <div class="progress-circle-wrapper">
+                <svg class="progress-ring" width="140" height="140">
+                    <circle class="progress-ring__bg" stroke-width="8" fill="transparent" r="60" cx="70" cy="70"></circle>
+                    <circle class="progress-ring__circle" stroke-width="8" stroke-linecap="round" fill="transparent" 
+                        r="60" cx="70" cy="70"
+                        [style.stroke-dasharray]="2 * 3.14159 * 60"
+                        [style.stroke-dashoffset]="getTodayProgressOffset()">
+                    </circle>
+                </svg>
+                <div class="progress-text">
+                    <span class="progress-num">{{ getTodayCompleted() }}</span>
+                    <span class="progress-total">/ {{ getTodayTotal() }}</span>
                 </div>
             </div>
 
-            <!-- Empty State -->
-            <div class="empty-state" *ngIf="filteredHabits.length === 0">
-                <p>No habits found matching your filter.</p>
-                <div *ngIf="habits.length === 0">
-                    <p>Start tracking by adding a new habit!</p>
-                    <button class="primary-btn" (click)="openAddHabitModal()">Create First Habit</button>
+            <p class="progress-message">{{ getMotivationalMessage() }}</p>
+
+            <div class="today-list">
+                <div class="today-item" *ngFor="let habit of getTodayHabits()"
+                    [class.completed]="isHabitCompletedToday(habit)"
+                    (click)="toggleHabitToday(habit, $event)">
+                    <div class="habit-checkbox"
+                        [class.checked]="isHabitCompletedToday(habit)"
+                        [style.background-color]="isHabitCompletedToday(habit) ? habit.color : ''"
+                        [style.border-color]="isHabitCompletedToday(habit) ? habit.color : ''">
+                    </div>
+                    <span class="habit-icon-small">{{ habit.icon }}</span>
+                    <span class="today-habit-name" [class.done]="isHabitCompletedToday(habit)">{{ habit.name }}</span>
+                </div>
+                <div class="empty-today" *ngIf="getTodayHabits().length === 0">
+                    <p>No habits for today</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modals (Add/Edit) -->
+    <!-- Add/Edit Modal -->
     <div class="modal-overlay" *ngIf="isAddHabitModalOpen || isEditHabitModalOpen"
         (click)="isAddHabitModalOpen ? closeAddHabitModal() : closeEditHabitModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
             <div class="modal-header">
-                <h2>{{ isAddHabitModalOpen ? 'Create New Habit' : 'Edit Habit' }}</h2>
-                <button class="close-btn"
-                    (click)="isAddHabitModalOpen ? closeAddHabitModal() : closeEditHabitModal()">×</button>
+                <div class="modal-title">{{ isAddHabitModalOpen ? 'New Habit' : 'Edit Habit' }}</div>
+                <button class="modal-close" (click)="isAddHabitModalOpen ? closeAddHabitModal() : closeEditHabitModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Habit Name *</label>
-                    <input type="text" [(ngModel)]="habitForm.name" placeholder="e.g., Morning Exercise"
-                        class="form-input">
+                    <label class="detail-label">Habit Name *</label>
+                    <input type="text" [(ngModel)]="habitForm.name" placeholder="e.g., Morning Exercise" class="detail-date-input">
                 </div>
 
                 <div class="form-group">
-                    <label>Goal (Description)</label>
-                    <input type="text" [(ngModel)]="habitForm.description" placeholder="e.g., Run 5km"
-                        class="form-input">
+                    <label class="detail-label">Goal / Description</label>
+                    <input type="text" [(ngModel)]="habitForm.description" placeholder="e.g., Run 5km" class="detail-date-input">
                 </div>
 
-                <div class="form-row">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
-                        <label>Frequency</label>
-                        <select [(ngModel)]="habitForm.frequency" class="form-select">
+                        <label class="detail-label">Frequency</label>
+                        <select [(ngModel)]="habitForm.frequency" class="detail-date-input">
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Category</label>
-                        <select [(ngModel)]="habitForm.category" class="form-select">
+                        <label class="detail-label">Category</label>
+                        <select [(ngModel)]="habitForm.category" class="detail-date-input">
                             <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Icon</label>
+                    <label class="detail-label">Icon</label>
                     <div class="icon-picker">
                         <button type="button" *ngFor="let icon of icons" class="icon-option"
                             [class.selected]="habitForm.icon === icon" (click)="habitForm.icon = icon">
@@ -205,7 +319,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Color</label>
+                    <label class="detail-label">Color</label>
                     <div class="color-picker">
                         <button type="button" *ngFor="let color of colors" class="color-option"
                             [class.selected]="habitForm.color === color" [style.background-color]="color"
@@ -215,12 +329,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="delete-btn" *ngIf="isEditHabitModalOpen && selectedHabit"
-                    (click)="deleteHabit(selectedHabit)">Delete</button>
-                <div class="spacer"></div>
-                <button class="secondary-btn"
-                    (click)="isAddHabitModalOpen ? closeAddHabitModal() : closeEditHabitModal()">Cancel</button>
-                <button class="primary-btn" (click)="isAddHabitModalOpen ? saveHabit() : updateHabit()">Save</button>
+                <button class="btn-delete" *ngIf="isEditHabitModalOpen && selectedHabit" (click)="deleteHabit(selectedHabit)">Delete</button>
+                <div style="flex: 1;"></div>
+                <button class="btn-secondary" (click)="isAddHabitModalOpen ? closeAddHabitModal() : closeEditHabitModal()">Cancel</button>
+                <button class="btn-primary" (click)="isAddHabitModalOpen ? saveHabit() : updateHabit()">Save</button>
             </div>
         </div>
     </div>

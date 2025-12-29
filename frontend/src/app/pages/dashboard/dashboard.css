@@ -1223,3 +1223,262 @@
     cursor: pointer;
     font-size: 0.9rem;
 }
+
+/* Mobile Back Button */
+.back-btn-mobile {
+    display: none;
+}
+
+/* Mobile Responsive Dashboard */
+@media (max-width: 768px) {
+    .back-btn-mobile {
+        display: block;
+    }
+
+    .dashboard-body {
+        position: relative;
+    }
+
+    /* Mobile Sidebar */
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1000;
+        /* Above task list */
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        /* Partial width */
+        max-width: 300px;
+    }
+
+    /* Mobile Main Content */
+    .main-content {
+        min-width: 100%;
+        padding: 0;
+    }
+
+    .list-header {
+        padding: 1.5rem 1rem 1rem;
+    }
+
+    .add-task-bar {
+        padding: 0 1rem;
+    }
+
+    .task-list {
+        padding: 0 1rem 2rem;
+    }
+
+    /* Mobile Detail Panel (Overlay) */
+    .detail-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1002;
+        /* Topmost */
+        border-left: none;
+        padding: 1.5rem;
+    }
+
+    .detail-header {
+        margin-top: 2rem;
+        /* Space for close button if added or top spacing */
+    }
+
+    /* Improve focus mode responsiveness */
+    .focus-container {
+        padding: 1rem;
+    }
+
+    .timer-wrapper {
+        width: 300px;
+        height: 300px;
+    }
+
+    .progress-ring {
+        width: 300px;
+        height: 300px;
+    }
+
+    /* Adjust SVG circles for new size (300px width -> cx/cy=150, r=135) */
+    .progress-ring .progress-ring__bg,
+    .progress-ring .progress-ring__circle {
+        cx: 150;
+        cy: 150;
+        r: 135;
+    }
+
+    .time-text {
+        font-size: 3.5rem;
+    }
+
+    .focus-header {
+        left: 1.5rem;
+        right: 1.5rem;
+    }
+
+    /* Stats container mobile */
+    .stats-container {
+        gap: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile Responsiveness - NEW */
+@media (max-width: 768px) {
+    .app-container {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .navbar {
+        padding: 0.5rem 1rem;
+    }
+
+    /* Sidebar - Mobile Drawer */
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 1050;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        height: 100vh;
+        width: 260px;
+        transform: none;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex !important;
+        /* Force flex in case it was hidden */
+    }
+
+    .sidebar.visible {
+        transform: none;
+    }
+
+    .dashboard-body {
+        flex-direction: column;
+        width: 100%;
+        position: relative;
+    }
+
+    .main-content {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .list-header {
+        padding: 1.5rem 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .add-task-bar {
+        padding: 0 1rem;
+    }
+
+    .task-list {
+        padding: 0 1rem 5rem;
+        /* Extra padding for bottom stuff */
+    }
+
+    /* Detail Panel - Bottom Sheet style */
+    .detail-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 85vh;
+        border-right: none;
+        border-left: none;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
+        z-index: 1060;
+        padding: 1.5rem;
+        transition: transform 0.3s ease;
+        /* Default state if in DOM */
+        transform: translateY(0);
+    }
+
+    /* Focus Mode Mobile */
+    .focus-header {
+        position: relative;
+        top: 0;
+        padding: 1rem;
+        left: 0;
+        margin-bottom: 2rem;
+    }
+
+    .timer-wrapper {
+        width: 280px;
+        height: 280px;
+    }
+
+    .time-text {
+        font-size: 3.5rem;
+    }
+
+    .stats-container {
+        gap: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+}
+
+@media (max-width: 768px) {
+
+    /* Matrix View Mobile */
+    .matrix-view {
+        grid-template-columns: 1fr !important;
+        /* Stack quadrants */
+        grid-template-rows: auto !important;
+        padding: 1rem;
+        gap: 1rem;
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .matrix-quadrant {
+        min-height: 250px;
+    }
+
+    /* Ensure Sidebar Visibility Controls */
+    .sidebar-open-btn {
+        display: flex !important;
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 2000;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        padding: 8px;
+    }
+
+    .navbar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        /* Left might be covered by sidebar btn, add padding */
+        padding-left: 3.5rem;
+        z-index: 1001;
+    }
+
+    .dashboard-body {
+        margin-top: 50px;
+        /* Push down content */
+        height: calc(100vh - 50px);
+    }
+}

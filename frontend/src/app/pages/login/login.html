@@ -19,125 +19,163 @@
             {{ errorMessage }}
         </div>
 
-        <!-- Mode Switcher -->
-        <div class="mode-switcher">
-            <div class="mode-switcher-inner">
-                <button [class.active]="!showOtpInput" (click)="showOtpInput = false" class="mode-btn">
-                    Password
-                </button>
-                <button [class.active]="showOtpInput" (click)="showOtpInput = true" class="mode-btn">
-                    One-Time Code
-                </button>
-            </div>
-        </div>
-
-        <!-- Password Login Form -->
-        <form *ngIf="!showOtpInput" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" formControlName="email" class="form-input"
-                    [class.is-invalid]="submitted && f['email'].errors" placeholder="name@company.com">
-                <div *ngIf="submitted && f['email'].errors" class="text-error text-xs mt-1">
-                    <div *ngIf="f['email'].errors['required']">Email is required</div>
-                    <div *ngIf="f['email'].errors['email']">Email must be a valid email address</div>
+        <!-- Email Verification Required (after login attempt) -->
+        <div *ngIf="requiresVerification" class="auth-form">
+            <div class="text-center mb-6">
+                <div class="verification-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
                 </div>
+                <h3 style="margin-top: 1rem; font-weight: 600; color: #1e293b;">Verify your email</h3>
+                <p class="text-sm" style="color: #64748b; margin-top: 0.5rem;">
+                    We've sent a verification code to<br>
+                    <strong style="color: var(--primary);">{{ emailForOtp }}</strong>
+                </p>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <div style="position: relative;">
-                    <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="form-input"
-                        [class.is-invalid]="submitted && f['password'].errors" placeholder="••••••••"
-                        style="padding-right: 32px;">
-                    <button (click)="showPassword = !showPassword"
-                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
-                        type="button">
-                        {{ showPassword ? 'Hide' : 'Show' }}
-                    </button>
-                </div>
-                <div *ngIf="submitted && f['password'].errors" class="text-error text-xs mt-1">
-                    <div *ngIf="f['password'].errors['required']">Password is required</div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center mb-8">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" class="form-checkbox">
-                    <span class="text-muted" style="font-size: 0.9rem;">Remember me</span>
-                </label>
-                <a href="#" class="forgot-link">Forgot password?</a>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-full" [disabled]="loading">
-                <span *ngIf="loading" class="btn-spinner"></span>
-                {{ loading ? 'Logging in...' : 'Log In' }}
-            </button>
-        </form>
-
-        <!-- OTP Login Form -->
-        <div *ngIf="showOtpInput" class="auth-form">
             <form [formGroup]="otpForm">
-                <div class="form-group" *ngIf="!isOtpSent">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" formControlName="email" class="form-input" placeholder="name@company.com">
-                    <div class="mt-4">
-                        <button type="button" (click)="sendOtp()" class="btn btn-primary w-full" [disabled]="loading">
-                            <span *ngIf="loading" class="btn-spinner"></span>
-                            {{ loading ? 'Sending...' : 'Send Login Code' }}
-                        </button>
-                    </div>
-                </div>
+                <label class="form-label text-center">Verification Code</label>
+                <input type="text" formControlName="otp" class="form-input text-center tracking-widest font-mono"
+                    placeholder="000000" maxlength="6" style="font-size: 1.1rem; letter-spacing: 0.3em;">
 
-                <div class="form-group" *ngIf="isOtpSent">
-                    <div class="text-center mb-6">
-                        <p class="text-sm" style="color: #64748b;">Enter the 6-digit code sent to</p>
-                        <p class="font-medium" style="color: var(--primary); margin-top: 0.25rem;">{{ emailForOtp }}</p>
-                    </div>
+                <button type="button" (click)="verifyEmail()" class="btn btn-primary w-full mt-6"
+                    [disabled]="loading || otpForm.get('otp')?.invalid">
+                    <span *ngIf="loading" class="btn-spinner"></span>
+                    {{ loading ? 'Verifying...' : 'Verify Email' }}
+                </button>
 
-                    <label class="form-label text-center">One-Time Password</label>
-                    <input type="text" formControlName="otp" class="form-input text-center tracking-widest font-mono"
-                        placeholder="000000" maxlength="6" style="font-size: 1.1rem; letter-spacing: 0.3em;">
-
-                    <button type="button" (click)="verifyOtp()" class="btn btn-primary w-full mt-6"
-                        [disabled]="loading || otpForm.get('otp')?.invalid">
-                        <span *ngIf="loading" class="btn-spinner"></span>
-                        {{ loading ? 'Verifying...' : 'Verify & Login' }}
+                <div class="text-center mt-4">
+                    <button type="button" (click)="requiresVerification = false"
+                        style="background: none; border: none; font-size: 0.85rem; color: #64748b; cursor: pointer; font-weight: 500; transition: color 0.2s;">
+                        Back to Login
                     </button>
-
-                    <div class="text-center mt-4">
-                        <button type="button" (click)="isOtpSent = false"
-                            style="background: none; border: none; font-size: 0.85rem; color: #64748b; cursor: pointer; font-weight: 500; transition: color 0.2s;">
-                            Change Email
-                        </button>
-                    </div>
                 </div>
             </form>
         </div>
 
-        <!-- OAuth Divider -->
-        <div class="oauth-divider">
-            <span>Or continue with</span>
-        </div>
+        <!-- Normal Login Flow -->
+        <ng-container *ngIf="!requiresVerification">
+            <!-- Mode Switcher -->
+            <div class="mode-switcher">
+                <div class="mode-switcher-inner">
+                    <button [class.active]="!showOtpInput" (click)="showOtpInput = false" class="mode-btn">
+                        Password
+                    </button>
+                    <button [class.active]="showOtpInput" (click)="showOtpInput = true" class="mode-btn">
+                        One-Time Code
+                    </button>
+                </div>
+            </div>
 
-        <!-- OAuth Buttons -->
-        <div class="oauth-buttons">
-            <button type="button" class="oauth-btn google-btn" (click)="loginWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 18 18">
-                    <path fill="#4285F4"
-                        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
-                    <path fill="#34A853"
-                        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-                    <path fill="#FBBC05"
-                        d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-                    <path fill="#EA4335"
-                        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
-                </svg>
-                Google
-            </button>
-        </div>
+            <!-- Password Login Form -->
+            <form *ngIf="!showOtpInput" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" formControlName="email" class="form-input"
+                        [class.is-invalid]="submitted && f['email'].errors" placeholder="name@company.com">
+                    <div *ngIf="submitted && f['email'].errors" class="text-error text-xs mt-1">
+                        <div *ngIf="f['email'].errors['required']">Email is required</div>
+                        <div *ngIf="f['email'].errors['email']">Email must be a valid email address</div>
+                    </div>
+                </div>
 
-        <div class="bottom-text">
-            Don't have an account? <a routerLink="/signup" class="bottom-link">Sign up</a>
-        </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div style="position: relative;">
+                        <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="form-input"
+                            [class.is-invalid]="submitted && f['password'].errors" placeholder="••••••••"
+                            style="padding-right: 32px;">
+                        <button (click)="showPassword = !showPassword"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;"
+                            type="button">
+                            {{ showPassword ? 'Hide' : 'Show' }}
+                        </button>
+                    </div>
+                    <div *ngIf="submitted && f['password'].errors" class="text-error text-xs mt-1">
+                        <div *ngIf="f['password'].errors['required']">Password is required</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-8">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="form-checkbox">
+                        <span class="text-muted" style="font-size: 0.9rem;">Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full" [disabled]="loading">
+                    <span *ngIf="loading" class="btn-spinner"></span>
+                    {{ loading ? 'Logging in...' : 'Log In' }}
+                </button>
+            </form>
+
+            <!-- OTP Login Form -->
+            <div *ngIf="showOtpInput" class="auth-form">
+                <form [formGroup]="otpForm">
+                    <div class="form-group" *ngIf="!isOtpSent">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" formControlName="email" class="form-input" placeholder="name@company.com">
+                        <div class="mt-4">
+                            <button type="button" (click)="sendOtp()" class="btn btn-primary w-full" [disabled]="loading">
+                                <span *ngIf="loading" class="btn-spinner"></span>
+                                {{ loading ? 'Sending...' : 'Send Login Code' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" *ngIf="isOtpSent">
+                        <div class="text-center mb-6">
+                            <p class="text-sm" style="color: #64748b;">Enter the 6-digit code sent to</p>
+                            <p class="font-medium" style="color: var(--primary); margin-top: 0.25rem;">{{ emailForOtp }}</p>
+                        </div>
+
+                        <label class="form-label text-center">One-Time Password</label>
+                        <input type="text" formControlName="otp" class="form-input text-center tracking-widest font-mono"
+                            placeholder="000000" maxlength="6" style="font-size: 1.1rem; letter-spacing: 0.3em;">
+
+                        <button type="button" (click)="verifyOtp()" class="btn btn-primary w-full mt-6"
+                            [disabled]="loading || otpForm.get('otp')?.invalid">
+                            <span *ngIf="loading" class="btn-spinner"></span>
+                            {{ loading ? 'Verifying...' : 'Verify & Login' }}
+                        </button>
+
+                        <div class="text-center mt-4">
+                            <button type="button" (click)="isOtpSent = false"
+                                style="background: none; border: none; font-size: 0.85rem; color: #64748b; cursor: pointer; font-weight: 500; transition: color 0.2s;">
+                                Change Email
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- OAuth Divider -->
+            <div class="oauth-divider">
+                <span>Or continue with</span>
+            </div>
+
+            <!-- OAuth Buttons -->
+            <div class="oauth-buttons">
+                <button type="button" class="oauth-btn google-btn" (click)="loginWithGoogle()">
+                    <svg width="20" height="20" viewBox="0 0 18 18">
+                        <path fill="#4285F4"
+                            d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                        <path fill="#34A853"
+                            d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                        <path fill="#FBBC05"
+                            d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                        <path fill="#EA4335"
+                            d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
+                    </svg>
+                    Google
+                </button>
+            </div>
+
+            <div class="bottom-text">
+                Don't have an account? <a routerLink="/signup" class="bottom-link">Sign up</a>
+            </div>
+        </ng-container>
     </div>
 </div>

@@ -1,17 +1,19 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Router, ActivatedRoute } from '@angular/router';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 import { TaskService, Task, CustomList } from '../../services/task';
-import { AuthService } from '../../services/auth';
-// import { HabitsComponent } from '../habits/habits';
+import { AuthService, UserProfile } from '../../services/auth';
+import { NotificationService } from '../../services/notification';
+import { CalendarComponent } from '../calendar/calendar';
+import { AppHeaderComponent } from '../../components/app-header/app-header';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, CalendarComponent, AppHeaderComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -22,15 +24,14 @@ export class DashboardComponent implements OnInit {
   newTaskTitle = '';
 
   // Sidebar state
-  currentFilter = 'today'; // today, inbox, next7, work, personal, completed, trash, focus, matrix, habits
-
+  currentFilter = 'today';
   selectedTask: Task | null = null;
   saveStatus = '';
   activeMoveTaskId: string | null = null;
-  isSidebarOpen = true; // Sidebar toggle state
+  isSidebarOpen = true;
 
   // Pomodoro State
-  pomoTime = 25 * 60; // 25 minutes in seconds
+  pomoTime = 25 * 60;
   pomoInitialTime = 25 * 60;
   pomoIsRunning = false;
   pomoInterval: any;
@@ -48,25 +49,27 @@ export class DashboardComponent implements OnInit {
   timelineHours: number[] = [];
   pomoStartTime: Date | null = null;
 
+  username = '';
+  userAvatarUrl = '';
+
   constructor(
     public taskService: TaskService,
     public authService: AuthService,
-    public router: Router
+    private notification: NotificationService,
+    public router: Router,
+    private route: ActivatedRoute
   ) {
     this.generateTimeline();
   }
 
   get focusBlockHeight(): number {
-    // Return relative height based on mode
     if (this.pomoMode === 'focus') return 25;
     if (this.pomoMode === 'short') return 5;
     return 15;
   }
 
-
   generateTimeline() {
     const currentHour = new Date().getHours();
-    // Show from 1 hour before to 5 hours after
     for (let i = -1; i < 5; i++) {
       let h = currentHour + i;
       if (h > 23) h -= 24;
@@ -79,7 +82,7 @@ export class DashboardComponent implements OnInit {
     const now = new Date();
     const startHour = this.timelineHours[0];
     let hourDiff = now.getHours() - startHour;
-    if (hourDiff < 0) hourDiff += 24; // Handle midnight wrap
+    if (hourDiff < 0) hourDiff += 24;
     return (hourDiff * 60) + now.getMinutes();
   }
 
@@ -111,10 +114,6 @@ export class DashboardComponent implements OnInit {
   get pomoProgress(): number {
     const radius = 170;
     const circumference = 2 * Math.PI * radius;
-    // Calculate offset based on REMAINING time
-    // offset = circumference means (gap) is full circumference -> 0% visible
-    // offset = 0 means (gap) is 0 -> 100% visible
-
     const percentRemaining = this.pomoTime / this.pomoInitialTime;
     return circumference - (percentRemaining * circumference);
   }
@@ -145,7 +144,6 @@ export class DashboardComponent implements OnInit {
     }
     this.pomoIsRunning = true;
 
-    // Clear any existing interval to prevent double-speed
     if (this.pomoInterval) clearInterval(this.pomoInterval);
 
     this.pomoInterval = setInterval(() => {
@@ -176,22 +174,24 @@ export class DashboardComponent implements OnInit {
     this.pomoTime = this.pomoInitialTime;
     this.pomoStartTime = null;
 
-    // Update Stats
     if (this.pomoMode === 'focus') {
       this.pomoStats.sessionsCompleted++;
       this.pomoStats.totalMinutes += 25;
       if (this.focusedTask) {
         this.pomoStats.tasksCompletedInFocus++;
-        // Optional: Mark task as done?
-        // this.toggleComplete(this.focusedTask); 
       }
     }
 
-    // Play sound notification
-    const audio = new Audio('assets/sounds/bell.mp3'); // Ensure this file exists or use browser default
-    audio.play().catch(e => console.log('Audio play failed', e));
+    // Try to play notification sound
+    try {
+      const audio = new Audio('assets/sounds/bell.mp3');
+      audio.play().catch(() => {});
+    } catch (e) {
+      // Silently fail if audio not available
+    }
 
-    alert(`${this.pomoMode === 'focus' ? 'Focus Session' : 'Break'} Completed!`);
+    const message = this.pomoMode === 'focus' ? 'Focus session completed! Time for a break.' : 'Break is over! Ready to focus?';
+    this.notification.success(message, 'Pomodoro');
   }
 
   selectFocusTask(e: any) {
@@ -203,8 +203,6 @@ export class DashboardComponent implements OnInit {
     this.focusedTask = this.tasks.find(t => t.id === taskId) || null;
   }
 
-  username = '';
-
   ngOnInit() {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
@@ -212,11 +210,20 @@ export class DashboardComponent implements OnInit {
     }
 
     this.authService.getProfile().subscribe({
-      next: (user) => {
+      next: (user: UserProfile) => {
         this.username = user.name || 'User';
         this.userAvatarUrl = user.profilePictureUrl || '';
       },
-      error: () => console.error('Failed to load profile')
+      error: () => this.notification.error('Failed to load profile')
+    });
+
+    // Check for openSettings query param (from other pages)
+    this.route.queryParams.subscribe(params => {
+      if (params['openSettings']) {
+        this.openProfileModal();
+        // Clear the query param
+        this.router.navigate([], { queryParams: {} });
+      }
     });
 
     this.loadLists();
@@ -226,7 +233,7 @@ export class DashboardComponent implements OnInit {
   loadLists() {
     this.taskService.getLists().subscribe({
       next: (lists) => this.customLists = lists,
-      error: (err) => console.error('Failed to load lists', err)
+      error: () => this.notification.error('Failed to load lists')
     });
   }
 
@@ -237,8 +244,9 @@ export class DashboardComponent implements OnInit {
     this.taskService.createList(name).subscribe({
       next: (list) => {
         this.customLists.push(list);
+        this.notification.success(`List "${name}" created`);
       },
-      error: (err) => console.error('Failed to create list', err)
+      error: () => this.notification.error('Failed to create list')
     });
   }
 
@@ -248,13 +256,13 @@ export class DashboardComponent implements OnInit {
         this.tasks = tasks;
         this.applyFilter();
       },
-      error: (err) => console.error('Failed to load tasks', err)
+      error: () => this.notification.error('Failed to load tasks')
     });
   }
 
   setFilter(filter: string) {
     this.currentFilter = filter;
-    this.selectedTask = null; // Deselect on filter change
+    this.selectedTask = null;
     if (filter !== 'habits') {
       this.applyFilter();
     }
@@ -283,6 +291,52 @@ export class DashboardComponent implements OnInit {
 
   selectTask(task: Task) {
     this.selectedTask = { ...task };
+
+    if (task.startTime) {
+      const start = new Date(task.startTime);
+      this.taskStartTime = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      this.taskStartTime = '';
+    }
+
+    if (task.endTime) {
+      const end = new Date(task.endTime);
+      this.taskEndTime = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      this.taskEndTime = '';
+    }
+  }
+
+  taskStartTime = '';
+  taskEndTime = '';
+
+  updateTaskTime() {
+    if (!this.selectedTask || !this.selectedTask.dueDate) return;
+
+    if (this.taskStartTime && this.taskEndTime) {
+      const [startHour, startMin] = this.taskStartTime.split(':').map(Number);
+      const [endHour, endMin] = this.taskEndTime.split(':').map(Number);
+
+      const startDate = new Date(this.selectedTask.dueDate);
+      startDate.setHours(startHour, startMin, 0, 0);
+
+      const endDate = new Date(this.selectedTask.dueDate);
+      endDate.setHours(endHour, endMin, 0, 0);
+
+      this.selectedTask.startTime = startDate.toISOString();
+      this.selectedTask.endTime = endDate.toISOString();
+      this.selectedTask.allDay = false;
+
+      const durationMs = endDate.getTime() - startDate.getTime();
+      this.selectedTask.durationMinutes = Math.max(1, Math.floor(durationMs / 60000));
+    } else {
+      this.selectedTask.startTime = undefined;
+      this.selectedTask.endTime = undefined;
+      this.selectedTask.allDay = true;
+      this.selectedTask.durationMinutes = undefined;
+    }
+
+    this.updateSelectedTask();
   }
 
   updateSelectedTask() {
@@ -300,9 +354,9 @@ export class DashboardComponent implements OnInit {
         this.saveStatus = 'Saved';
         setTimeout(() => this.saveStatus = '', 2000);
       },
-      error: (err) => {
-        console.error('Failed to update', err);
+      error: () => {
         this.saveStatus = 'Error saving';
+        this.notification.error('Failed to save changes');
       }
     });
   }
@@ -325,15 +379,11 @@ export class DashboardComponent implements OnInit {
         this.newTaskTitle = '';
         this.applyFilter();
       },
-      error: (err) => console.error('Failed to create task', err)
+      error: () => this.notification.error('Failed to create task')
     });
   }
 
   getTasksByPriority(priority: number): Task[] {
-    // Q1: High (3) -> Urgent & Important
-    // Q2: Med (2) -> Not Urgent & Important
-    // Q3: Low (1) -> Urgent & Unimportant
-    // Q4: None (0) -> Not Urgent & Unimportant
     return this.tasks.filter(t => !t.completed && t.priority === priority);
   }
 
@@ -344,10 +394,10 @@ export class DashboardComponent implements OnInit {
     this.applyFilter();
 
     this.taskService.toggleComplete(task.id).subscribe({
-      error: (err) => {
-        console.error('Failed to toggle', err);
+      error: () => {
         task.completed = !task.completed;
         this.applyFilter();
+        this.notification.error('Failed to update task');
       }
     });
   }
@@ -361,13 +411,15 @@ export class DashboardComponent implements OnInit {
       next: () => {
         this.tasks = this.tasks.filter(t => t.id !== task.id);
         this.applyFilter();
+        this.notification.success('Task deleted');
       },
-      error: (err) => console.error('Failed to delete', err)
+      error: () => this.notification.error('Failed to delete task')
     });
   }
 
   logout() {
     this.authService.logout();
+    this.notification.info('You have been logged out');
   }
 
   // Profile Management State
@@ -390,36 +442,27 @@ export class DashboardComponent implements OnInit {
   showNewPassword = false;
   showConfirmPassword = false;
 
-  userAvatarUrl = '';
-
   onMatrixDrop(event: CdkDragDrop<Task[]>, newPriority: number) {
     if (event.previousContainer === event.container) {
       return;
     }
 
-    // Moving between quadrants
     const task = event.item.data as Task;
     if (!task) return;
 
-    // Update priority local first for instant feedback (though filter loop might fight it)
     task.priority = newPriority;
 
-    // Explicitly update backend
     this.taskService.updateTask(task.id!, task).subscribe({
       next: (updated) => {
-        // ensure local matches updated
         const idx = this.tasks.findIndex(t => t.id === updated.id);
         if (idx !== -1) {
           this.tasks[idx] = updated;
-          // No need to call applyFilter() explicitly if getter is used in view, but doesn't hurt.
         }
       },
-      error: (err) => {
-        console.error('Failed to move task', err);
-        // Revert logic could go here
-      }
+      error: () => this.notification.error('Failed to move task')
     });
   }
+
   addMatrixTask(priority: number, event: any) {
     const title = event.target.value.trim();
     if (!title) return;
@@ -435,9 +478,9 @@ export class DashboardComponent implements OnInit {
     this.taskService.createTask(newTask).subscribe({
       next: (task) => {
         this.tasks.push(task);
-        event.target.value = ''; // Clear
+        event.target.value = '';
       },
-      error: (err) => console.error('Failed to create matrix task', err)
+      error: () => this.notification.error('Failed to create task')
     });
   }
 
@@ -447,7 +490,6 @@ export class DashboardComponent implements OnInit {
       this.activeMoveTaskId = null;
     } else {
       this.activeMoveTaskId = task.id || null;
-      // Optional: Close other menus if any
       this.isProfileMenuOpen = false;
     }
   }
@@ -455,30 +497,23 @@ export class DashboardComponent implements OnInit {
   moveTask(task: Task, listName: string) {
     if (!task.id) return;
 
-    // Optimistic update
     const previousList = task.listName;
     task.listName = listName;
-
-    // Close menu
     this.activeMoveTaskId = null;
-
-    // Apply filter immediately (removes from view if inbox and moving out)
     this.applyFilter();
 
     this.taskService.updateTask(task.id, task).subscribe({
       next: (updated) => {
-        // Confirm update
         const index = this.tasks.findIndex(t => t.id === updated.id);
         if (index !== -1) {
           this.tasks[index] = updated;
         }
+        this.notification.success(`Moved to ${listName}`);
       },
-      error: (err) => {
-        console.error('Failed to move task', err);
-        // Revert
+      error: () => {
         task.listName = previousList;
         this.applyFilter();
-        alert('Failed to move task');
+        this.notification.error('Failed to move task');
       }
     });
   }
@@ -506,48 +541,56 @@ export class DashboardComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('File is too large. Max 2MB.');
+        this.notification.error('File is too large. Max 2MB.');
         return;
       }
       this.authService.uploadAvatar(file).subscribe({
         next: (res) => {
           this.editProfileData.profilePictureUrl = res.url;
-          // Optional: Auto-save if desired, but user can just click Save Changes
+          this.notification.success('Image uploaded');
         },
-        error: (err) => alert('Failed to upload image')
+        error: () => this.notification.error('Failed to upload image')
       });
     }
   }
 
   saveProfile() {
     this.authService.updateProfile(this.editProfileData).subscribe({
-      next: (user) => {
+      next: (user: UserProfile) => {
         this.username = user.name;
         this.userAvatarUrl = user.profilePictureUrl || '';
-        alert('Profile updated successfully');
+        this.notification.success('Profile updated successfully');
         this.closeProfileModal();
       },
-      error: (err) => alert('Failed to update profile')
+      error: () => this.notification.error('Failed to update profile')
     });
   }
 
   changePassword() {
     if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
-      alert('Passwords do not match');
+      this.notification.error('Passwords do not match');
+      return;
+    }
+
+    if (this.passwordData.newPassword.length < 8) {
+      this.notification.error('Password must be at least 8 characters');
       return;
     }
 
     this.authService.changePassword({
-      currentPassword: this.passwordData.currentPassword,
-      newPassword: this.passwordData.newPassword
+        currentPassword: this.passwordData.currentPassword,
+        newPassword: this.passwordData.newPassword
     }).subscribe({
-      next: () => {
-        alert('Password changed successfully');
-        this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
-        this.closeProfileModal();
-      },
-      error: (err) => alert('Failed to change password')
-    });
+        next: () => {
+        this.notification.success('Password changed successfully');
+          this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
+          this.closeProfileModal();
+        },
+      error: (err) => {
+        const message = err.error?.message || 'Failed to change password';
+        this.notification.error(message);
+      }
+      });
   }
 
   @HostListener('document:click', ['$event'])

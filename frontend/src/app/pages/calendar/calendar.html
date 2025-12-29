@@ -1,0 +1,278 @@
+<div class="calendar-page">
+    <!-- App Header -->
+    <app-header
+        [username]="username"
+        [userAvatarUrl]="userAvatarUrl"
+        [showSidebarToggle]="true"
+        (toggleSidebar)="toggleSidebar()"
+        (openSettings)="openSettingsModal()">
+    </app-header>
+
+    <div class="calendar-layout">
+        <!-- Left Sidebar -->
+        <aside class="calendar-sidebar" [class.collapsed]="sidebarCollapsed">
+            <!-- Mini Calendar -->
+            <div class="mini-calendar">
+                <div class="mini-header">
+                    <button class="mini-nav" (click)="prevMiniMonth()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <span class="mini-title">{{ miniCalendarDate | date:'MMMM yyyy' }}</span>
+                    <button class="mini-nav" (click)="nextMiniMonth()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="mini-weekdays">
+                    <span *ngFor="let d of ['M','T','W','T','F','S','S']">{{ d }}</span>
+                </div>
+                <div class="mini-days">
+                    <button *ngFor="let day of miniMonthDays"
+                        class="mini-day"
+                        [class.other-month]="!isSameMonth(day, miniCalendarDate)"
+                        [class.today]="isToday(day)"
+                        [class.selected]="isSameDay(day, currentDate)"
+                        [class.has-events]="hasEventsOnDay(day)"
+                        (click)="goToDate(day)">
+                        {{ day.getDate() }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="sidebar-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ getTodayTaskCount() }}</span>
+                    <span class="stat-label">Today</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ getWeekTaskCount() }}</span>
+                    <span class="stat-label">This Week</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ getOverdueCount() }}</span>
+                    <span class="stat-label">Overdue</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="sidebar-actions">
+                <button class="action-btn primary" (click)="openQuickAdd()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Event
+                </button>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="upcoming-section">
+                <h4>Upcoming</h4>
+                <div class="upcoming-list">
+                    <div class="upcoming-item" *ngFor="let task of getUpcomingTasks().slice(0,5)"
+                        [style.border-left-color]="getEventColor(task)"
+                        (click)="openTaskDetail(task)">
+                        <div class="upcoming-time">{{ formatUpcomingTime(task) }}</div>
+                        <div class="upcoming-title">{{ task.title }}</div>
+                    </div>
+                    <div class="no-upcoming" *ngIf="getUpcomingTasks().length === 0">
+                        No upcoming events
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Calendar Area -->
+        <main class="calendar-main">
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <div class="header-left">
+                    <button class="today-btn" (click)="today()">Today</button>
+                    <div class="nav-buttons">
+                        <button class="nav-btn" (click)="navigatePrev()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <button class="nav-btn" (click)="navigateNext()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <h1 class="current-range">{{ getCurrentRangeTitle() }}</h1>
+                </div>
+                <div class="header-right">
+                    <div class="view-switcher">
+                        <button [class.active]="currentView === 'day'" (click)="switchView('day')">Day</button>
+                        <button [class.active]="currentView === 'week'" (click)="switchView('week')">Week</button>
+                        <button [class.active]="currentView === 'month'" (click)="switchView('month')">Month</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Week/Day View -->
+            <div class="time-grid-container" *ngIf="currentView === 'week' || currentView === 'day'">
+                <!-- All Day Section -->
+                <div class="all-day-section">
+                    <div class="all-day-label">All day</div>
+                    <div class="all-day-row">
+                        <div class="all-day-cell" *ngFor="let day of getViewDays()">
+                            <div class="all-day-event" *ngFor="let task of getAllDayTasks(day)"
+                                [style.background]="getEventColor(task)"
+                                (click)="openTaskDetail(task)">
+                                {{ task.title }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day Headers -->
+                <div class="day-headers">
+                    <div class="time-gutter-header"></div>
+                    <div class="day-header" *ngFor="let day of getViewDays()" [class.today]="isToday(day)">
+                        <span class="day-name">{{ day | date:'EEE' }}</span>
+                        <span class="day-num" [class.today-num]="isToday(day)">{{ day.getDate() }}</span>
+                    </div>
+                </div>
+
+                <!-- Time Grid -->
+                <div class="time-grid" #timeGrid>
+                    <div class="time-gutter">
+                        <div class="time-slot" *ngFor="let hour of visibleHours">
+                            <span class="time-label">{{ formatHour(hour) }}</span>
+                        </div>
+                    </div>
+                    <div class="day-columns">
+                        <div class="day-column" *ngFor="let day of getViewDays()" [class.today-col]="isToday(day)">
+                            <!-- Time slots for clicking -->
+                            <div class="time-slot-cell" *ngFor="let hour of visibleHours"
+                                (click)="onTimeSlotClick(day, hour, $event)"
+                                (dragover)="onDragOver($event)"
+                                (drop)="onDrop($event, day, hour)">
+                            </div>
+                            <!-- Current time indicator -->
+                            <div class="current-time-indicator" *ngIf="isToday(day)"
+                                [style.top.px]="getCurrentTimePosition()">
+                            </div>
+                            <!-- Events -->
+                            <div class="events-layer">
+                                <div class="calendar-event"
+                                    *ngFor="let event of getTimedEventsForDay(day)"
+                                    [style.top.px]="event.top"
+                                    [style.height.px]="event.height"
+                                    [style.left]="event.left + '%'"
+                                    [style.width]="event.width + '%'"
+                                    [style.background]="getEventColor(event.task)"
+                                    [class.completed]="event.task.completed"
+                                    draggable="true"
+                                    (dragstart)="onDragStart($event, event.task)"
+                                    (click)="openTaskDetail(event.task)">
+                                    <div class="event-content">
+                                        <span class="event-title">{{ event.task.title }}</span>
+                                        <span class="event-time" *ngIf="event.height > 40">
+                                            {{ formatEventTimeRange(event.task) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Month View -->
+            <div class="month-grid-container" *ngIf="currentView === 'month'">
+                <div class="month-weekdays">
+                    <div class="weekday-name" *ngFor="let name of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']">
+                        {{ name }}
+                    </div>
+                </div>
+                <div class="month-grid">
+                    <div class="month-cell" *ngFor="let day of monthDays"
+                        [class.other-month]="!isSameMonth(day, currentDate)"
+                        [class.today]="isToday(day)"
+                        (click)="goToDate(day); switchView('day')">
+                        <div class="cell-header">
+                            <span class="cell-date" [class.today-date]="isToday(day)">{{ day.getDate() }}</span>
+                        </div>
+                        <div class="cell-events">
+                            <div class="month-event" *ngFor="let task of getTasksForMonthDay(day).slice(0, 3)"
+                                [style.background]="getEventColor(task)"
+                                (click)="openTaskDetail(task); $event.stopPropagation()">
+                                {{ task.title }}
+                            </div>
+                            <div class="more-events" *ngIf="getTasksForMonthDay(day).length > 3">
+                                +{{ getTasksForMonthDay(day).length - 3 }} more
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Quick Add Modal -->
+    <div class="modal-overlay" *ngIf="quickAddVisible" (click)="closeQuickAdd()">
+        <div class="quick-add-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>{{ editingTask ? 'Edit Event' : 'New Event' }}</h3>
+                <button class="close-btn" (click)="closeQuickAdd()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="event-title-input" [(ngModel)]="newTaskTitle"
+                    placeholder="Event title" autofocus (keyup.enter)="saveTask()">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" [(ngModel)]="quickAddDateStr" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" [(ngModel)]="quickAddStartTime" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" [(ngModel)]="quickAddEndTime" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" [(ngModel)]="quickAddAllDay">
+                        <span>All day</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div class="priority-picker">
+                        <button type="button" *ngFor="let p of [0, 1, 2, 3]"
+                            class="priority-btn"
+                            [class.selected]="quickAddPriority === p"
+                            [style.background]="quickAddPriority === p ? getPriorityColor(p) : ''"
+                            (click)="quickAddPriority = p">
+                            {{ getPriorityLabel(p) }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-delete" *ngIf="editingTask" (click)="deleteTask()">Delete</button>
+                <div class="spacer"></div>
+                <button class="btn-cancel" (click)="closeQuickAdd()">Cancel</button>
+                <button class="btn-save" (click)="saveTask()">
+                    {{ editingTask ? 'Update' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
