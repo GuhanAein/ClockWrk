@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=com.task.clockwrk.clockWork.config.DatabaseUrlEnvironmentPostProcessor
+

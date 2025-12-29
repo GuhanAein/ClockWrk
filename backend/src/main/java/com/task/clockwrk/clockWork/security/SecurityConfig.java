@@ -95,20 +95,34 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
+        // Normalize frontend URL - add https:// if no protocol specified
+        String normalizedFrontendUrl = frontendUrl;
+        if (normalizedFrontendUrl != null && !normalizedFrontendUrl.startsWith("http://") && !normalizedFrontendUrl.startsWith("https://")) {
+            normalizedFrontendUrl = "https://" + normalizedFrontendUrl;
+        }
+        
         // Parse frontend URL and add both localhost and production
         List<String> allowedOrigins = Arrays.asList(
                 "http://localhost:4200",
                 "https://localhost:4200",
-                frontendUrl
+                normalizedFrontendUrl
         );
         
         // If frontend URL uses HTTP, also allow HTTPS version
-        if (frontendUrl.startsWith("http://")) {
+        if (normalizedFrontendUrl != null && normalizedFrontendUrl.startsWith("http://")) {
             allowedOrigins = Arrays.asList(
                     "http://localhost:4200",
                     "https://localhost:4200",
-                    frontendUrl,
-                    frontendUrl.replace("http://", "https://")
+                    normalizedFrontendUrl,
+                    normalizedFrontendUrl.replace("http://", "https://")
+            );
+        } else if (normalizedFrontendUrl != null && normalizedFrontendUrl.startsWith("https://")) {
+            // Also allow HTTP version for flexibility
+            allowedOrigins = Arrays.asList(
+                    "http://localhost:4200",
+                    "https://localhost:4200",
+                    normalizedFrontendUrl,
+                    normalizedFrontendUrl.replace("https://", "http://")
             );
         }
         

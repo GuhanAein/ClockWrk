@@ -37,3 +37,6 @@ build/
 
 # Application Properties
 
+
+# Local environment variables (contains secrets)
+.env.local
