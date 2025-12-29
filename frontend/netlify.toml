@@ -1,0 +1,9 @@
+[build]
+  publish = "dist/clockwrk/browser"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
