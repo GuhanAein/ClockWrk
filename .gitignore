@@ -1,0 +1,33 @@
+# Environment files with secrets
+.env
+.env.local
+.env.production
+*.env
+
+# Documentation files that might contain secrets
+AWS_ENVIRONMENT_VARIABLES.txt
+*_ENVIRONMENT_VARIABLES.txt
+*_SECRETS*.txt
+*_CREDENTIALS*.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+node_modules/
+dist/
+target/
+build/
+*.jar
+*.war
+
+# Logs
+*.log
+logs/
