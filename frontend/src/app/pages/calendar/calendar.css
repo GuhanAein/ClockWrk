@@ -1,6 +1,6 @@
 /* Calendar Page Layout */
 .calendar-page {
-    height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
     background: #f8fafc;
@@ -742,6 +742,7 @@
         opacity: 0;
         transform: translateY(-20px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
