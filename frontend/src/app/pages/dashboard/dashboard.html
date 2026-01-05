@@ -1,11 +1,7 @@
 <div class="app-container">
     <!-- Top Navbar -->
-    <app-header
-        [username]="username"
-        [userAvatarUrl]="userAvatarUrl"
-        [showSidebarToggle]="!isSidebarOpen"
-        (toggleSidebar)="toggleSidebar()"
-        (openSettings)="openProfileModal()">
+    <app-header [username]="username" [userAvatarUrl]="userAvatarUrl" [showSidebarToggle]="!isSidebarOpen"
+        (toggleSidebar)="toggleSidebar()" (openSettings)="openProfileModal()">
     </app-header>
 
     <!-- Profile Modal -->
@@ -112,6 +108,9 @@
     </div>
 
     <div class="dashboard-body">
+        <!-- Sidebar Backdrop for Mobile -->
+        <div class="sidebar-backdrop" *ngIf="isSidebarOpen" (click)="toggleSidebar()"></div>
+
         <!-- Left Sidebar -->
         <div class="sidebar" *ngIf="isSidebarOpen">
             <!-- Profile moved to Top Navbar -->
@@ -349,7 +348,7 @@
                 </div>
 
                 <div class="timer-wrapper">
-                    <svg class="progress-ring" width="380" height="380">
+                    <svg class="progress-ring" viewBox="0 0 380 380">
                         <circle class="progress-ring__bg" stroke-width="4" fill="transparent" r="170" cx="190" cy="190">
                         </circle>
                         <circle class="progress-ring__circle" stroke-width="4" stroke-linecap="round" fill="transparent"
@@ -538,7 +537,7 @@
         </div>
 
         <!-- Right: Detail/Calendar -->
-        <div class="detail-panel"
+        <div class="detail-panel empty-state-panel"
             *ngIf="!selectedTask && currentFilter !== 'focus' && currentFilter !== 'matrix' && currentFilter !== 'habits' && currentFilter !== 'calendar'"
             style="align-items: center; justify-content: center; text-align: center;">
             <svg class="empty-state-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -615,7 +614,7 @@
                     <span class="prio-option" [class.selected]="selectedTask.priority === 1"
                         (click)="selectedTask.priority=1; updateSelectedTask()" style="color: #617FDE;">Low</span>
                     <span class="prio-option" [class.selected]="selectedTask.priority === 2"
-                        (click)="selectedTask.priority=2; updateSelectedTask()" style="color: #FNB400;">Med</span>
+                        (click)="selectedTask.priority=2; updateSelectedTask()" style="color: #FFB400;">Med</span>
                     <span class="prio-option" [class.selected]="selectedTask.priority === 3"
                         (click)="selectedTask.priority=3; updateSelectedTask()" style="color: #FF5252;">High</span>
                 </div>
