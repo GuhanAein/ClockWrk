@@ -1119,20 +1119,6 @@
     backdrop-filter: blur(2px);
 }
 
-.sidebar-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 1040;
-    /* Below sidebar, above everything else */
-    backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease-out;
-    display: none;
-    /* Hide by default on desktop */
-}
 
 .modal-content {
     background: white;
@@ -1437,9 +1423,5 @@
     /* Adjust Detail Panel internal layout */
     .detail-panel.focus-stats-panel {
         padding: 1rem;
-    }
-}
-    .sidebar-backdrop {
-        display: block;
     }
 }
