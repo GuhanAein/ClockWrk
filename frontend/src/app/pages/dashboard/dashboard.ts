@@ -185,7 +185,7 @@ export class DashboardComponent implements OnInit {
     // Try to play notification sound
     try {
       const audio = new Audio('assets/sounds/bell.mp3');
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     } catch (e) {
       // Silently fail if audio not available
     }
@@ -204,6 +204,10 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      this.isSidebarOpen = false;
+    }
+
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
@@ -578,19 +582,19 @@ export class DashboardComponent implements OnInit {
     }
 
     this.authService.changePassword({
-        currentPassword: this.passwordData.currentPassword,
-        newPassword: this.passwordData.newPassword
+      currentPassword: this.passwordData.currentPassword,
+      newPassword: this.passwordData.newPassword
     }).subscribe({
-        next: () => {
+      next: () => {
         this.notification.success('Password changed successfully');
-          this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
-          this.closeProfileModal();
-        },
+        this.passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
+        this.closeProfileModal();
+      },
       error: (err) => {
         const message = err.error?.message || 'Failed to change password';
         this.notification.error(message);
       }
-      });
+    });
   }
 
   @HostListener('document:click', ['$event'])
