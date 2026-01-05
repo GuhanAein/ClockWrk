@@ -1119,6 +1119,19 @@
     backdrop-filter: blur(2px);
 }
 
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1040;
+    /* Below sidebar, above everything else */
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease-out;
+}
+
 .modal-content {
     background: white;
     width: 100%;
@@ -1231,108 +1244,8 @@
 
 /* Mobile Responsive Dashboard */
 @media (max-width: 768px) {
-    .back-btn-mobile {
-        display: block;
-    }
 
-    .dashboard-body {
-        position: relative;
-    }
-
-    /* Mobile Sidebar */
-    .sidebar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        z-index: 1000;
-        /* Above task list */
-        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
-        width: 80%;
-        /* Partial width */
-        max-width: 300px;
-    }
-
-    /* Mobile Main Content */
-    .main-content {
-        min-width: 100%;
-        padding: 0;
-    }
-
-    .list-header {
-        padding: 1.5rem 1rem 1rem;
-    }
-
-    .add-task-bar {
-        padding: 0 1rem;
-    }
-
-    .task-list {
-        padding: 0 1rem 2rem;
-    }
-
-    /* Mobile Detail Panel (Overlay) */
-    .detail-panel {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1002;
-        /* Topmost */
-        border-left: none;
-        padding: 1.5rem;
-    }
-
-    .detail-header {
-        margin-top: 2rem;
-        /* Space for close button if added or top spacing */
-    }
-
-    /* Improve focus mode responsiveness */
-    .focus-container {
-        padding: 1rem;
-    }
-
-    .timer-wrapper {
-        width: 300px;
-        height: 300px;
-    }
-
-    .progress-ring {
-        width: 300px;
-        height: 300px;
-    }
-
-    /* Adjust SVG circles for new size (300px width -> cx/cy=150, r=135) */
-    .progress-ring .progress-ring__bg,
-    .progress-ring .progress-ring__circle {
-        cx: 150;
-        cy: 150;
-        r: 135;
-    }
-
-    .time-text {
-        font-size: 3.5rem;
-    }
-
-    .focus-header {
-        left: 1.5rem;
-        right: 1.5rem;
-    }
-
-    /* Stats container mobile */
-    .stats-container {
-        gap: 1rem;
-    }
-
-    .stat-value {
-        font-size: 1.25rem;
-    }
-}
-
-/* Mobile Responsiveness - NEW */
-@media (max-width: 768px) {
+    /* 1. Layout & Navbar */
     .app-container {
         height: 100vh;
         overflow: hidden;
@@ -1340,26 +1253,36 @@
 
     .navbar {
         padding: 0.5rem 1rem;
+        position: relative;
+        z-index: 1100;
+        justify-content: space-between;
     }
 
-    /* Sidebar - Mobile Drawer */
+    /* 2. Sidebar - Off-canvas Drawer style */
     .sidebar {
         position: fixed;
         left: 0;
         top: 0;
         bottom: 0;
-        z-index: 1050;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        max-width: 300px;
         height: 100vh;
-        width: 260px;
-        transform: none;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1200;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+        transform: translateZ(0);
+        /* Better performance */
         display: flex !important;
-        /* Force flex in case it was hidden */
+        /* Ensure flex layout is used */
     }
 
-    .sidebar.visible {
-        transform: none;
+    /* 3. Main Content */
+    .main-content {
+        min-width: 0;
+        /* Override the 400px min-width */
+        width: 100%;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
     }
 
     .dashboard-body {
@@ -1368,16 +1291,16 @@
         position: relative;
     }
 
-    .main-content {
-        min-width: 100%;
-        width: 100%;
+    /* 4. Task List & Headers */
+    .list-header {
+        padding: 1rem;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .list-header {
-        padding: 1.5rem 1rem;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+    .list-title {
+        font-size: 1.5rem;
     }
 
     .add-task-bar {
@@ -1385,100 +1308,132 @@
     }
 
     .task-list {
-        padding: 0 1rem 5rem;
-        /* Extra padding for bottom stuff */
+        padding: 0 1rem 4rem;
+        /* Bottom padding for safety */
     }
 
-    /* Detail Panel - Bottom Sheet style */
+    /* 5. Detail Panel - Full Screen Overlay */
+    /* This ensures focus mode and task details are usable on small screens */
     .detail-panel {
         position: fixed;
-        bottom: 0;
+        top: 0;
         left: 0;
-        right: 0;
         width: 100%;
-        height: 85vh;
-        border-right: none;
+        height: 100%;
+        z-index: 1300;
+        /* Above sidebar */
         border-left: none;
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
-        z-index: 1060;
-        padding: 1.5rem;
-        transition: transform 0.3s ease;
-        /* Default state if in DOM */
-        transform: translateY(0);
+        padding: 1rem;
+        border-radius: 0;
+        overflow-y: auto;
+        transform: none;
+        /* Reset any previous transform */
+        animation: slideUp 0.2s ease-out;
     }
 
-    /* Focus Mode Mobile */
+    .back-btn-mobile {
+        display: block;
+        /* Show the back button */
+        padding: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .detail-header {
+        margin-top: 0;
+        padding-top: 0.5rem;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+
+    /* 6. Matrix & Content Views */
+    .matrix-container {
+        padding: 1rem;
+        display: block;
+        /* Let it flow */
+    }
+
+    .matrix-content {
+        display: flex;
+        /* Override grid */
+        flex-direction: column;
+        gap: 1rem;
+        padding-bottom: 2rem;
+        overflow-y: visible;
+        /* Container handles scroll */
+    }
+
+    .matrix-quadrant {
+        min-height: 200px;
+        height: auto;
+    }
+
+    /* 7. Focus Mode */
+    .focus-container {
+        padding: 1rem;
+        height: 100%;
+        overflow-y: auto;
+    }
+
     .focus-header {
         position: relative;
         top: 0;
-        padding: 1rem;
         left: 0;
+        right: 0;
         margin-bottom: 2rem;
+        width: 100%;
+        padding: 0.5rem;
     }
 
     .timer-wrapper {
         width: 280px;
         height: 280px;
+        margin-bottom: 1.5rem;
     }
+
+    .progress-ring {
+        width: 280px;
+        height: 280px;
+    }
+
+    /* Center the SVG circle elements for 280px size */
+    /* Original was 380px (cx=190). New is 280px (cx=140). Diff is 50. */
+    /* Note: SVG viewBox handles scaling, but we need to ensure the container is sized right. */
+    /* With viewBox="0 0 380 380", we just set width/height on svg and it scales. */
+    /* So we don't need to change cx/cy/r via CSS if viewBox is set. */
 
     .time-text {
         font-size: 3.5rem;
     }
 
+    .controls {
+        margin-bottom: 2rem;
+    }
+
     .stats-container {
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 1rem;
     }
 
-    .stat-value {
-        font-size: 1.2rem;
+    /* 8. Calendar Wrapper */
+    .calendar-wrapper {
+        padding: 0.5rem !important;
+        overflow-x: hidden;
     }
 
-}
-
-@media (max-width: 768px) {
-
-    /* Matrix View Mobile */
-    .matrix-view {
-        grid-template-columns: 1fr !important;
-        /* Stack quadrants */
-        grid-template-rows: auto !important;
-        padding: 1rem;
-        gap: 1rem;
-        height: auto;
-        overflow-y: auto;
-    }
-
-    .matrix-quadrant {
-        min-height: 250px;
-    }
-
-    /* Ensure Sidebar Visibility Controls */
+    /* Sidebar Toggle Button (Floating when sidebar closed) */
     .sidebar-open-btn {
-        display: flex !important;
-        position: fixed;
-        top: 12px;
-        left: 12px;
-        z-index: 2000;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        padding: 8px;
+        display: none !important;
     }
 
-    .navbar {
-        position: fixed;
-        top: 0;
-        right: 0;
-        left: 0;
-        /* Left might be covered by sidebar btn, add padding */
-        padding-left: 3.5rem;
-        z-index: 1001;
+    .detail-panel.empty-state-panel {
+        display: none !important;
     }
 
-    .dashboard-body {
-        margin-top: 50px;
-        /* Push down content */
-        height: calc(100vh - 50px);
+    /* Adjust Detail Panel internal layout */
+    .detail-panel.focus-stats-panel {
+        padding: 1rem;
     }
 }
