@@ -1130,6 +1130,8 @@
     /* Below sidebar, above everything else */
     backdrop-filter: blur(2px);
     animation: fadeIn 0.2s ease-out;
+    display: none;
+    /* Hide by default on desktop */
 }
 
 .modal-content {
@@ -1435,5 +1437,9 @@
     /* Adjust Detail Panel internal layout */
     .detail-panel.focus-stats-panel {
         padding: 1rem;
+    }
+}
+    .sidebar-backdrop {
+        display: block;
     }
 }
