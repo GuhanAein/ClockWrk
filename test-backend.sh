@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BACKEND_URL="http://clockwrk-backend-env.eba-2m5cierz.us-east-1.elasticbeanstalk.com"
+BACKEND_URL="https://clockwrk-production-1454.up.railway.app"
 
 echo "🔍 Testing ClockWrk Backend"
 echo "============================"
@@ -33,6 +33,6 @@ echo "   Status Code: $ROOT_STATUS"
 
 echo ""
 echo "📋 Next Steps:"
-echo "   - If status is 502, check AWS Elastic Beanstalk logs"
+echo "   - If status is 502, check Railway logs"
 echo "   - Verify environment variables are set correctly"
-echo "   - Check if application JAR is deployed"
+echo "   - Check if the application container is deployed"
