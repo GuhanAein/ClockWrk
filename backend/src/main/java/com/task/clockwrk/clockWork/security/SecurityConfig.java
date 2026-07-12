@@ -95,35 +95,41 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Normalize frontend URL - add https:// if no protocol specified
-        String normalizedFrontendUrl = frontendUrl;
-        if (normalizedFrontendUrl != null && !normalizedFrontendUrl.startsWith("http://") && !normalizedFrontendUrl.startsWith("https://")) {
-            normalizedFrontendUrl = "https://" + normalizedFrontendUrl;
-        }
-        
-        // Parse frontend URL and add both localhost and production
-        List<String> allowedOrigins = Arrays.asList(
+        // Default allowed origins
+        List<String> allowedOrigins = new java.util.ArrayList<>(Arrays.asList(
                 "http://localhost:4200",
                 "https://localhost:4200",
-                normalizedFrontendUrl
-        );
+                "https://clockwrk.in",
+                "http://clockwrk.in",
+                "https://clockwrk.netlify.app",
+                "http://clockwrk.netlify.app"
+        ));
         
-        // If frontend URL uses HTTP, also allow HTTPS version
-        if (normalizedFrontendUrl != null && normalizedFrontendUrl.startsWith("http://")) {
-            allowedOrigins = Arrays.asList(
-                    "http://localhost:4200",
-                    "https://localhost:4200",
-                    normalizedFrontendUrl,
-                    normalizedFrontendUrl.replace("http://", "https://")
-            );
-        } else if (normalizedFrontendUrl != null && normalizedFrontendUrl.startsWith("https://")) {
-            // Also allow HTTP version for flexibility
-            allowedOrigins = Arrays.asList(
-                    "http://localhost:4200",
-                    "https://localhost:4200",
-                    normalizedFrontendUrl,
-                    normalizedFrontendUrl.replace("https://", "http://")
-            );
+        // Add frontendUrl and split it by comma in case there are multiple
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            String[] urls = frontendUrl.split(",");
+            for (String url : urls) {
+                String trimmed = url.trim();
+                if (trimmed.isEmpty()) continue;
+                
+                // Add protocol if not present
+                if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                    trimmed = "https://" + trimmed;
+                }
+                
+                if (!allowedOrigins.contains(trimmed)) {
+                    allowedOrigins.add(trimmed);
+                }
+                
+                // Add the alternative HTTP/HTTPS protocol
+                String alternative = trimmed.startsWith("http://") 
+                        ? trimmed.replace("http://", "https://") 
+                        : trimmed.replace("https://", "http://");
+                        
+                if (!allowedOrigins.contains(alternative)) {
+                    allowedOrigins.add(alternative);
+                }
+            }
         }
         
         configuration.setAllowedOrigins(allowedOrigins);
